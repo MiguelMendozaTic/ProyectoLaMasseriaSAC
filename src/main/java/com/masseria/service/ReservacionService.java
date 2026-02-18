@@ -4,64 +4,87 @@ import com.masseria.entity.Reservacion;
 import com.masseria.repository.ReservacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 @Service
+@Transactional
 public class ReservacionService {
+    
     @Autowired
     private ReservacionRepository reservacionRepository;
-
+    
     public List<Reservacion> obtenerTodas() {
         return reservacionRepository.findAll();
     }
-
-    public List<Reservacion> obtenerPorFecha(LocalDate fecha) {
-        return reservacionRepository.findByFecha(fecha);
-    }
-
-    public List<Reservacion> obtenerPorEstado(String estado) {
-        return reservacionRepository.findByEstado(estado);
-    }
-
+    
     public Optional<Reservacion> obtenerPorId(Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return reservacionRepository.findById(id);
+        return Optional.ofNullable(id)
+                .flatMap(reservacionRepository::findById);
     }
-
+    
     public Reservacion guardar(Reservacion reservacion) {
-        if (reservacion == null) {
-            return null;
-        }
+        Objects.requireNonNull(reservacion, "La reservación no puede ser nula");
         return reservacionRepository.save(reservacion);
     }
-
-    public void eliminar(Long id) {
-        if (id != null) {
-            reservacionRepository.deleteById(id);
+    
+    public List<Reservacion> obtenerPorUsuario(Long usuarioId) {
+        if (usuarioId == null) {
+            return List.of(); // Retorna lista vacía en lugar de null
         }
+        return reservacionRepository.findByUsuarioId(usuarioId);
     }
-
-    public void confirmar(Long id) {
-        if (id != null) {
-            Optional<Reservacion> reservacion = reservacionRepository.findById(id);
-            reservacion.ifPresent(r -> {
-                r.setEstado("Confirmada");
-                reservacionRepository.save(r);
-            });
+    
+    public List<Reservacion> obtenerPorFecha(LocalDate fecha) {
+        if (fecha == null) {
+            return List.of();
         }
+        return reservacionRepository.findByFecha(fecha);
     }
-
-    public void cancelar(Long id) {
-        if (id != null) {
-            Optional<Reservacion> reservacion = reservacionRepository.findById(id);
-            reservacion.ifPresent(r -> {
-                r.setEstado("Cancelada");
-                reservacionRepository.save(r);
-            });
+    
+    public List<Reservacion> obtenerPorUsuarioOrdenadas(Long usuarioId) {
+        if (usuarioId == null) {
+            return List.of();
         }
+        return reservacionRepository.findByUsuarioIdOrderByFechaDescHoraDesc(usuarioId);
+    }
+    
+    public List<Reservacion> obtenerProximasReservaciones() {
+        return reservacionRepository.findProximasReservaciones(LocalDate.now());
+    }
+    
+    public boolean verificarDisponibilidad(LocalDate fecha, LocalTime hora) {
+        if (fecha == null || hora == null) {
+            return false;
+        }
+        List<Reservacion> reservaciones = reservacionRepository.findByFechaAndHora(fecha, hora);
+        return reservaciones.size() < 5; // Máximo 5 reservaciones por horario
+    }
+    
+    public void cancelarReservacion(Long id) {
+        Objects.requireNonNull(id, "El ID no puede ser nulo");
+        reservacionRepository.findById(id).ifPresent(reservacion -> {
+            reservacion.setEstado("CANCELADA");
+            reservacionRepository.save(reservacion);
+        });
+    }
+    
+    public void confirmarReservacion(Long id) {
+        Objects.requireNonNull(id, "El ID no puede ser nulo");
+        reservacionRepository.findById(id).ifPresent(reservacion -> {
+            reservacion.setEstado("CONFIRMADA");
+            reservacionRepository.save(reservacion);
+        });
+    }
+    
+    public List<Reservacion> obtenerReservacionesDelDia(LocalDate fecha) {
+        if (fecha == null) {
+            fecha = LocalDate.now(); // Por defecto, hoy
+        }
+        return reservacionRepository.findByFecha(fecha);
     }
 }

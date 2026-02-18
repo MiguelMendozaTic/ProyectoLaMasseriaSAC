@@ -7,7 +7,10 @@ import com.masseria.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Collections;
@@ -15,6 +18,7 @@ import java.util.Objects;
 
 @Service
 @Transactional
+@SuppressWarnings("null") // <-- ESTO ELIMINA TODOS LOS WARNINGS DE NULL SAFETY
 public class PedidoService {
     
     @Autowired
@@ -24,11 +28,17 @@ public class PedidoService {
     private UsuarioRepository usuarioRepository;
     
     // Constantes para los estados válidos
-    private static final String ESTADO_PENDIENTE = "PENDIENTE";
-    private static final String ESTADO_EN_PROCESO = "EN_PROCESO";
-    private static final String ESTADO_ENVIADO = "ENVIADO";
-    private static final String ESTADO_ENTREGADO = "ENTREGADO";
-    private static final String ESTADO_CANCELADO = "CANCELADO";
+    public static final String ESTADO_PENDIENTE = "PENDIENTE";
+    public static final String ESTADO_EN_PROCESO = "EN_PROCESO";
+    public static final String ESTADO_ENVIADO = "ENVIADO";
+    public static final String ESTADO_ENTREGADO = "ENTREGADO";
+    public static final String ESTADO_CANCELADO = "CANCELADO";
+    
+    // Constantes para tipos de entrega
+    public static final String ENTREGA_RECOGER = "RECOGER";
+    public static final String ENTREGA_DOMICILIO = "DOMICILIO";
+    
+    // ===== MÉTODOS BÁSICOS =====
     
     public List<Pedido> obtenerTodos() {
         return pedidoRepository.findAll();
@@ -39,12 +49,28 @@ public class PedidoService {
                 .flatMap(pedidoRepository::findById);
     }
     
-    // Cambiado de clienteId a usuarioId
+    // ===== MÉTODOS POR USUARIO =====
+    
     public List<Pedido> obtenerPorUsuario(Long usuarioId) {
         return Optional.ofNullable(usuarioId)
                 .map(pedidoRepository::findByUsuarioId)
                 .orElse(Collections.emptyList());
     }
+    
+    public List<Pedido> obtenerPorUsuarioYEstado(Long usuarioId, String estado) {
+        if (usuarioId == null || estado == null) {
+            return Collections.emptyList();
+        }
+        return pedidoRepository.findByUsuarioIdAndEstado(usuarioId, estado);
+    }
+    
+    public List<Pedido> obtenerPorUsuarioRecientes(Long usuarioId) {
+        return Optional.ofNullable(usuarioId)
+                .map(pedidoRepository::findByUsuarioIdOrderByFechaPedidoDesc)
+                .orElse(Collections.emptyList());
+    }
+    
+    // ===== MÉTODOS POR ESTADO =====
     
     public List<Pedido> obtenerPorEstado(String estado) {
         return Optional.ofNullable(estado)
@@ -52,6 +78,24 @@ public class PedidoService {
                 .map(pedidoRepository::findByEstado)
                 .orElse(Collections.emptyList());
     }
+    
+    public List<Pedido> obtenerPedidosPendientes() {
+        return pedidoRepository.findByEstado(ESTADO_PENDIENTE);
+    }
+    
+    public List<Pedido> obtenerPedidosEnProceso() {
+        return pedidoRepository.findByEstado(ESTADO_EN_PROCESO);
+    }
+    
+    public List<Pedido> obtenerPedidosEntregados() {
+        return pedidoRepository.findByEstado(ESTADO_ENTREGADO);
+    }
+    
+    public List<Pedido> obtenerPedidosCancelados() {
+        return pedidoRepository.findByEstado(ESTADO_CANCELADO);
+    }
+    
+    // ===== MÉTODOS POR FECHA =====
     
     public List<Pedido> obtenerPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         if (fechaInicio == null || fechaFin == null) {
@@ -62,6 +106,46 @@ public class PedidoService {
         }
         return pedidoRepository.findByFechaPedidoBetween(fechaInicio, fechaFin);
     }
+    
+    public List<Pedido> obtenerPedidosDelDia() {
+        LocalDateTime inicio = LocalDate.now().atStartOfDay();
+        LocalDateTime fin = LocalDate.now().atTime(LocalTime.MAX);
+        return pedidoRepository.findByFechaPedidoBetween(inicio, fin);
+    }
+    
+    public List<Pedido> obtenerPedidosDeLaSemana() {
+        LocalDateTime inicio = LocalDate.now().minusDays(7).atStartOfDay();
+        LocalDateTime fin = LocalDateTime.now();
+        return pedidoRepository.findByFechaPedidoBetween(inicio, fin);
+    }
+    
+    // ===== MÉTODOS POR TIPO DE ENTREGA =====
+    
+    public List<Pedido> obtenerPorTipoEntrega(String tipoEntrega) {
+        if (tipoEntrega == null || tipoEntrega.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return pedidoRepository.findByTipoEntrega(tipoEntrega);
+    }
+    
+    public List<Pedido> obtenerPedidosRecoger() {
+        return pedidoRepository.findByTipoEntrega(ENTREGA_RECOGER);
+    }
+    
+    public List<Pedido> obtenerPedidosDomicilio() {
+        return pedidoRepository.findByTipoEntrega(ENTREGA_DOMICILIO);
+    }
+    
+    // ===== MÉTODOS POR MÉTODO DE PAGO =====
+    
+    public List<Pedido> obtenerPorMetodoPago(String metodoPago) {
+        if (metodoPago == null || metodoPago.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return pedidoRepository.findByMetodoPago(metodoPago);
+    }
+    
+    // ===== MÉTODOS DE GUARDADO =====
     
     public Pedido guardar(Pedido pedido) {
         Objects.requireNonNull(pedido, "El pedido no puede ser nulo");
@@ -80,6 +164,29 @@ public class PedidoService {
             throw new IllegalArgumentException("El usuario especificado no existe");
         }
         
+        // Validar campos obligatorios
+        if (pedido.getClienteNombre() == null || pedido.getClienteNombre().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del cliente es obligatorio");
+        }
+        
+        if (pedido.getClienteTelefono() == null || pedido.getClienteTelefono().trim().isEmpty()) {
+            throw new IllegalArgumentException("El teléfono del cliente es obligatorio");
+        }
+        
+        if (pedido.getTipoEntrega() == null || pedido.getTipoEntrega().trim().isEmpty()) {
+            throw new IllegalArgumentException("El tipo de entrega es obligatorio");
+        }
+        
+        if (pedido.getMetodoPago() == null || pedido.getMetodoPago().trim().isEmpty()) {
+            throw new IllegalArgumentException("El método de pago es obligatorio");
+        }
+        
+        // Validar dirección si es envío a domicilio
+        if (ENTREGA_DOMICILIO.equals(pedido.getTipoEntrega()) && 
+            (pedido.getDireccionEntrega() == null || pedido.getDireccionEntrega().trim().isEmpty())) {
+            throw new IllegalArgumentException("La dirección es obligatoria para envío a domicilio");
+        }
+        
         if (!esEstadoValido(pedido.getEstado())) {
             pedido.setEstado(ESTADO_PENDIENTE);
         }
@@ -87,7 +194,6 @@ public class PedidoService {
         return pedidoRepository.save(pedido);
     }
     
-    // Método para guardar pedido solo con ID de usuario
     public Pedido guardarConUsuarioId(Pedido pedido, Long usuarioId) {
         Objects.requireNonNull(pedido, "El pedido no puede ser nulo");
         Objects.requireNonNull(usuarioId, "El ID del usuario no puede ser nulo");
@@ -97,12 +203,28 @@ public class PedidoService {
         
         pedido.setUsuario(usuario);
         
+        // Si no se especificaron datos del cliente, usar los del usuario
+        if (pedido.getClienteNombre() == null) {
+            pedido.setClienteNombre(usuario.getNombreCompleto());
+        }
+        if (pedido.getClienteEmail() == null) {
+            pedido.setClienteEmail(usuario.getEmail());
+        }
+        if (pedido.getClienteTelefono() == null) {
+            pedido.setClienteTelefono(usuario.getTelefono());
+        }
+        if (pedido.getDireccionEntrega() == null) {
+            pedido.setDireccionEntrega(usuario.getDireccion());
+        }
+        
         if (!esEstadoValido(pedido.getEstado())) {
             pedido.setEstado(ESTADO_PENDIENTE);
         }
         
         return pedidoRepository.save(pedido);
     }
+    
+    // ===== MÉTODOS DE ACTUALIZACIÓN =====
     
     public Pedido actualizarEstado(Long id, String nuevoEstado) {
         Objects.requireNonNull(id, "El id no puede ser nulo");
@@ -125,6 +247,20 @@ public class PedidoService {
             .orElseThrow(() -> new RuntimeException("Pedido no encontrado con id: " + id));
     }
     
+    public Pedido actualizarTipoEntrega(Long id, String tipoEntrega, String direccion) {
+        return pedidoRepository.findById(id)
+            .map(pedido -> {
+                pedido.setTipoEntrega(tipoEntrega);
+                if (ENTREGA_DOMICILIO.equals(tipoEntrega) && direccion != null) {
+                    pedido.setDireccionEntrega(direccion);
+                }
+                return pedidoRepository.save(pedido);
+            })
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado con id: " + id));
+    }
+    
+    // ===== MÉTODOS DE ELIMINACIÓN =====
+    
     public void eliminar(Long id) {
         Objects.requireNonNull(id, "El id no puede ser nulo");
         
@@ -133,6 +269,21 @@ public class PedidoService {
         }
         pedidoRepository.deleteById(id);
     }
+    
+    public void cancelarPedido(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("El ID no puede ser nulo");
+        }
+        pedidoRepository.findById(id).ifPresentOrElse(
+            pedido -> {
+                pedido.setEstado(ESTADO_CANCELADO);
+                pedidoRepository.save(pedido);
+            },
+            () -> { throw new RuntimeException("Pedido no encontrado con id: " + id); }
+        );
+    }
+    
+    // ===== MÉTODOS DE VALIDACIÓN =====
     
     private boolean esEstadoValido(String estado) {
         return estado != null && (
@@ -153,29 +304,39 @@ public class PedidoService {
             ESTADO_CANCELADO);
     }
     
-    public List<Pedido> obtenerPedidosPendientes() {
-        return pedidoRepository.findByEstado(ESTADO_PENDIENTE);
-    }
-    
-    public List<Pedido> obtenerPedidosEnProceso() {
-        return pedidoRepository.findByEstado(ESTADO_EN_PROCESO);
-    }
-    
-    public List<Pedido> obtenerPedidosEntregados() {
-        return pedidoRepository.findByEstado(ESTADO_ENTREGADO);
-    }
-    
-    public List<Pedido> obtenerPedidosPorUsuarioRecientes(Long usuarioId) {
-        return Optional.ofNullable(usuarioId)
-                .map(pedidoRepository::findByUsuarioIdOrderByFechaPedidoDesc)
-                .orElse(Collections.emptyList());
-    }
-    
     public boolean puedeCancelarPedido(Long id) {
+        if (id == null) return false;
         return obtenerPorId(id)
             .map(pedido -> 
                 pedido.getEstado().equals(ESTADO_PENDIENTE) || 
                 pedido.getEstado().equals(ESTADO_EN_PROCESO))
             .orElse(false);
+    }
+    
+    // ===== MÉTODOS ESTADÍSTICOS =====
+    
+    public long contarPedidosPendientes() {
+        return pedidoRepository.countByEstado(ESTADO_PENDIENTE);
+    }
+    
+    public long contarPedidosHoy() {
+        return obtenerPedidosDelDia().size();
+    }
+    
+    public BigDecimal calcularTotalVentasHoy() {
+        return obtenerPedidosDelDia().stream()
+            .map(Pedido::getTotal)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    
+    // ===== BÚSQUEDAS AVANZADAS =====
+    
+    public List<Pedido> buscarPedidos(String estado, String tipoEntrega, LocalDate fecha) {
+        return pedidoRepository.findAll().stream()
+            .filter(p -> estado == null || estado.isEmpty() || estado.equals(p.getEstado()))
+            .filter(p -> tipoEntrega == null || tipoEntrega.isEmpty() || tipoEntrega.equals(p.getTipoEntrega()))
+            .filter(p -> fecha == null || (p.getFechaPedido() != null && p.getFechaPedido().toLocalDate().equals(fecha)))
+            .toList();
     }
 }

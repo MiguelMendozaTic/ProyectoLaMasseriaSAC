@@ -77,4 +77,36 @@ public class DetallePedido {
         detalle.setCantidad(cantidad);
         return detalle;
     }
+    
+    // ===== MÉTODOS ADICIONALES ÚTILES (OPCIONALES) =====
+    
+    /**
+     * Actualiza el precio unitario basado en el producto actual
+     */
+    public void actualizarPrecio() {
+        if (producto != null) {
+            this.precioUnitario = producto.getPrecio();
+            calcularSubtotal();
+        }
+    }
+    
+    /**
+     * Obtiene el nombre del producto
+     */
+    public String getNombreProducto() {
+        return producto != null ? producto.getNombre() : "Producto no disponible";
+    }
+    
+    /**
+     * Verifica si el detalle es válido
+     */
+    public boolean esValido() {
+        return producto != null && cantidad != null && cantidad > 0 && precioUnitario != null;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("%s x%d - S/ %.2f", 
+            getNombreProducto(), cantidad, subtotal != null ? subtotal.doubleValue() : 0);
+    }
 }

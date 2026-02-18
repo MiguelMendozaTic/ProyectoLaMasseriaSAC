@@ -5,26 +5,78 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     
-    // Opción 1: Usar @Query explícitamente (RECOMENDADO)
+    // ===== BÚSQUEDAS POR USUARIO =====
+    
     @Query("SELECT p FROM Pedido p WHERE p.usuario.id = :usuarioId")
     List<Pedido> findByUsuarioId(@Param("usuarioId") Long usuarioId);
-    
-    // Opción 2: Usar la convención de nomenclatura con punto
-    // List<Pedido> findByUsuario_Id(Long usuarioId);
-    
-    List<Pedido> findByEstado(String estado);
-    
-    List<Pedido> findByFechaPedidoBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
     
     @Query("SELECT p FROM Pedido p WHERE p.usuario.id = :usuarioId AND p.estado = :estado")
     List<Pedido> findByUsuarioIdAndEstado(@Param("usuarioId") Long usuarioId, @Param("estado") String estado);
     
     @Query("SELECT p FROM Pedido p WHERE p.usuario.id = :usuarioId ORDER BY p.fechaPedido DESC")
     List<Pedido> findByUsuarioIdOrderByFechaPedidoDesc(@Param("usuarioId") Long usuarioId);
+    
+    // ===== BÚSQUEDAS POR ESTADO =====
+    
+    List<Pedido> findByEstado(String estado);
+    
+    @Query("SELECT p FROM Pedido p WHERE p.estado IN :estados")
+    List<Pedido> findByEstados(@Param("estados") List<String> estados);
+    
+    // ===== BÚSQUEDAS POR FECHA =====
+    
+    List<Pedido> findByFechaPedidoBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
+    
+    @Query("SELECT p FROM Pedido p WHERE DATE(p.fechaPedido) = :fecha")
+    List<Pedido> findByFechaPedido(@Param("fecha") LocalDate fecha);
+    
+    @Query("SELECT p FROM Pedido p WHERE p.fechaPedido >= :fecha ORDER BY p.fechaPedido DESC")
+    List<Pedido> findPedidosRecientes(@Param("fecha") LocalDateTime fecha);
+    
+    // ===== BÚSQUEDAS POR TIPO DE ENTREGA =====
+    
+    List<Pedido> findByTipoEntrega(String tipoEntrega);
+    
+    @Query("SELECT p FROM Pedido p WHERE p.tipoEntrega = :tipoEntrega AND p.estado = :estado")
+    List<Pedido> findByTipoEntregaAndEstado(@Param("tipoEntrega") String tipoEntrega, @Param("estado") String estado);
+    
+    // ===== BÚSQUEDAS POR MÉTODO DE PAGO =====
+    
+    List<Pedido> findByMetodoPago(String metodoPago);
+    
+    // ===== CONSULTAS ESTADÍSTICAS =====
+    
+    @Query("SELECT COUNT(p) FROM Pedido p WHERE p.estado = :estado")
+    long countByEstado(@Param("estado") String estado);
+    
+    @Query("SELECT SUM(p.total) FROM Pedido p WHERE DATE(p.fechaPedido) = :fecha")
+    BigDecimal sumTotalByFecha(@Param("fecha") LocalDate fecha);
+    
+    @Query("SELECT p.estado, COUNT(p) FROM Pedido p GROUP BY p.estado")
+    List<Object[]> countPedidosByEstado();
+    
+    // ===== BÚSQUEDAS AVANZADAS =====
+    
+    @Query("SELECT p FROM Pedido p WHERE " +
+           "(:usuarioId IS NULL OR p.usuario.id = :usuarioId) AND " +
+           "(:estado IS NULL OR p.estado = :estado) AND " +
+           "(:tipoEntrega IS NULL OR p.tipoEntrega = :tipoEntrega)")
+    List<Pedido> buscarPedidos(
+            @Param("usuarioId") Long usuarioId,
+            @Param("estado") String estado,
+            @Param("tipoEntrega") String tipoEntrega);
+    
+    @Query("SELECT p FROM Pedido p WHERE p.clienteTelefono = :telefono")
+    List<Pedido> findByClienteTelefono(@Param("telefono") String telefono);
+    
+    @Query("SELECT p FROM Pedido p WHERE p.clienteEmail = :email")
+    List<Pedido> findByClienteEmail(@Param("email") String email);
 }
