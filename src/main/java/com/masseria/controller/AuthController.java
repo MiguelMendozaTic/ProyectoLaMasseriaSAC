@@ -3,6 +3,7 @@ package com.masseria.controller;
 import com.masseria.entity.Usuario;
 import com.masseria.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,9 @@ public class AuthController {
     @Autowired
     private UsuarioRepository usuarioRepository;
     
+    @Autowired
+    private PasswordEncoder passwordEncoder;  // <-- INYECTAR PasswordEncoder
+    
     @GetMapping("/login")
     public String loginForm(Model model) {
         model.addAttribute("activePage", "login");
@@ -30,10 +34,11 @@ public class AuthController {
                         RedirectAttributes redirectAttributes) {
         
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .filter(u -> u.getPassword().equals(password) && u.getActivo())
+                .filter(u -> u.getActivo())
                 .orElse(null);
         
-        if (usuario != null) {
+        // VERIFICAR CON PASSWORD ENCRIPTADO
+        if (usuario != null && passwordEncoder.matches(password, usuario.getPassword())) {
             usuario.setUltimoAcceso(LocalDateTime.now());
             usuarioRepository.save(usuario);
             
@@ -48,17 +53,17 @@ public class AuthController {
             return "redirect:/login?error";
         }
     }
-
+    
     @GetMapping("/registro")
     public String registroForm(Model model) {
         model.addAttribute("activePage", "registro");
         return "registro";
     }
     
-   @PostMapping("/registro")
+    @PostMapping("/registro")
     public String registro(@ModelAttribute Usuario usuario,
-                        @RequestParam String confirmPassword,
-                        RedirectAttributes redirectAttributes) {
+                           @RequestParam String confirmPassword,
+                           RedirectAttributes redirectAttributes) {
         
         if (!usuario.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
@@ -75,8 +80,12 @@ public class AuthController {
             return "redirect:/registro?error=dni";
         }
         
-        // ASIGNAR USERNAME (usando el email como username)
-        usuario.setUsername(usuario.getEmail());  // <-- ESTA LÍNEA ES LA CLAVE
+        // ASIGNAR USERNAME (usando el email)
+        usuario.setUsername(usuario.getEmail());
+        
+        // ===== PASO IMPORTANTE: CODIFICAR LA CONTRASEÑA =====
+        String passwordCodificado = passwordEncoder.encode(usuario.getPassword());
+        usuario.setPassword(passwordCodificado);
         
         usuario.setActivo(true);
         usuario.setRol("CLIENTE");
@@ -102,6 +111,6 @@ public class AuthController {
         }
         model.addAttribute("usuario", usuario);
         model.addAttribute("activePage", "perfil");
-        return "perfil";  // Busca perfil.html en templates/
+        return "perfil";
     }
 }

@@ -15,7 +15,9 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <!-- Mensajes de éxito/error -->
+                        <!-- ===== MENSAJES MEJORADOS ===== -->
+                        
+                        <!-- Mensaje de registro exitoso -->
                         <div th:if="${param.registro != null}" class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fa fa-check-circle mr-2"></i>
                             <span th:text="${mensaje} ?: 'Registro exitoso. ¡Ya puedes iniciar sesión!'"></span>
@@ -24,9 +26,28 @@
                             </button>
                         </div>
                         
+                        <!-- Mensaje de error de credenciales -->
                         <div th:if="${param.error != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="fa fa-exclamation-circle mr-2"></i>
                             <span th:text="${error} ?: 'Credenciales incorrectas'"></span>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        
+                        <!-- ===== NUEVO: Mensaje cuando se intenta acceder a página protegida ===== -->
+                        <div th:if="${param.acceso != null}" class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fa fa-exclamation-triangle mr-2"></i>
+                            <span th:text="${error} ?: 'Debes iniciar sesión para acceder a esta página'"></span>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Mensaje de sesión cerrada -->
+                        <div th:if="${param.logout != null}" class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            <span>Has cerrado sesión correctamente</span>
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -38,7 +59,8 @@
                                     <i class="fa fa-envelope text-primary mr-1"></i>Correo Electrónico
                                 </label>
                                 <input class="form-control py-3" id="email" name="email" 
-                                       type="email" placeholder="Ingresa tu correo electrónico" required />
+                                       type="email" placeholder="Ingresa tu correo electrónico" 
+                                       th:value="${email}" required />
                             </div>
                             <div class="form-group">
                                 <label class="small mb-1" for="password">

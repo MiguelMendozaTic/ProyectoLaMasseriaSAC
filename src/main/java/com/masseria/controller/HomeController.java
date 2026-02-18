@@ -25,9 +25,9 @@ public class HomeController {
     private CategoriaService categoriaService;
     
     @Autowired
-    private ContactoService contactoService;  // Agregado
+    private ContactoService contactoService;
 
-    // ========== PÁGINAS PRINCIPALES ==========
+    // ========== PÁGINAS PÚBLICAS (NO REQUIEREN LOGIN) ==========
     
     @GetMapping("/")
     public String inicio(Model model) {
@@ -77,22 +77,47 @@ public class HomeController {
         return "contacto";
     }
 
+    // ========== PÁGINAS PROTEGIDAS (REQUIEREN LOGIN) ==========
+    
     @GetMapping("/reservaciones")
-    public String reservaciones(Model model) {
+    public String reservaciones(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        // PASO 1: Verificar si hay usuario en sesión
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        
+        // PASO 2: Si no hay usuario, redirigir al login con mensaje
+        if (usuario == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para hacer una reservación");
+            return "redirect:/login";
+        }
+        
+        // PASO 3: Si hay usuario, mostrar la página
+        model.addAttribute("usuario", usuario);
         model.addAttribute("activePage", "reservaciones");
         return "reservacion";
     }
 
     @GetMapping("/pedidos")
-    public String pedidos(Model model) {
+    public String pedidos(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        // PASO 1: Verificar si hay usuario en sesión
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        
+        // PASO 2: Si no hay usuario, redirigir al login con mensaje
+        if (usuario == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para hacer un pedido");
+            return "redirect:/login";
+        }
+        
+        // PASO 3: Si hay usuario, mostrar la página
+        model.addAttribute("usuario", usuario);
         model.addAttribute("activePage", "pedidos");
         return "pedidos";
     }
 
-    // ========== PROCESAMIENTO DE FORMULARIOS ==========
+    // ========== PROCESAMIENTO DE FORMULARIOS PROTEGIDOS ==========
     
     @PostMapping("/reservaciones/guardar")
     public String guardarReservacion(
+            HttpSession session,  // AGREGADO: HttpSession
             @RequestParam String nombre,
             @RequestParam String correo,
             @RequestParam String telefono,
@@ -100,17 +125,27 @@ public class HomeController {
             @RequestParam String hora,
             @RequestParam Integer cantidadPersonas,
             @RequestParam(required = false) String notas,
-            Model model) {
+            RedirectAttributes redirectAttributes) {  // CAMBIADO: Model por RedirectAttributes
         
-        // Aquí iría la lógica para guardar en BD
-        System.out.println("Reservación guardada: " + nombre + " - " + fecha + " " + hora);
+        // PASO 1: Verificar si hay usuario en sesión
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para guardar una reservación");
+            return "redirect:/login";
+        }
         
-        model.addAttribute("mensaje", "¡Reservación realizada con éxito!");
+        // PASO 2: Aquí iría la lógica para guardar en BD (asociando el usuario)
+        System.out.println("Reservación guardada para usuario: " + usuario.getEmail());
+        System.out.println("Detalles: " + nombre + " - " + fecha + " " + hora);
+        
+        // PASO 3: Mensaje de éxito y redirección
+        redirectAttributes.addFlashAttribute("mensaje", "¡Reservación realizada con éxito!");
         return "redirect:/reservaciones?exito";
     }
 
     @PostMapping("/pedidos/guardar")
     public String guardarPedido(
+            HttpSession session,  // AGREGADO: HttpSession
             @RequestParam String cliente,
             @RequestParam String correo,
             @RequestParam String telefono,
@@ -119,15 +154,26 @@ public class HomeController {
             @RequestParam(required = false) String direccion,
             @RequestParam String metodoPago,
             @RequestParam String detalles,
-            Model model) {
+            RedirectAttributes redirectAttributes) {  // CAMBIADO: Model por RedirectAttributes
         
-        // Aquí iría la lógica para guardar en BD
-        System.out.println("Pedido guardado: " + cliente + " - Total: " + total);
+        // PASO 1: Verificar si hay usuario en sesión
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        if (usuario == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para guardar un pedido");
+            return "redirect:/login";
+        }
         
-        model.addAttribute("mensaje", "¡Pedido realizado con éxito!");
+        // PASO 2: Aquí iría la lógica para guardar en BD (asociando el usuario)
+        System.out.println("Pedido guardado para usuario: " + usuario.getEmail());
+        System.out.println("Cliente: " + cliente + " - Total: " + total);
+        
+        // PASO 3: Mensaje de éxito y redirección
+        redirectAttributes.addFlashAttribute("mensaje", "¡Pedido realizado con éxito!");
         return "redirect:/pedidos?exito";
     }
 
+    // ========== FORMULARIO PÚBLICO (NO REQUIERE LOGIN) ==========
+    
     @PostMapping("/mensaje")
     public String enviarMensaje(
             @RequestParam String nombre,
@@ -144,11 +190,10 @@ public class HomeController {
         contacto.setAsunto(asunto);
         contacto.setMensaje(mensaje);
         
-        // Si el usuario está logueado, asociarlo automáticamente
+        // Si el usuario está logueado, asociarlo automáticamente (opcional)
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario != null) {
             contacto.setUsuario(usuario);
-            // Asegurar que el email coincida con el del usuario
             contacto.setEmail(usuario.getEmail());
         }
         
@@ -160,4 +205,4 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("mensaje", "Mensaje enviado con éxito. Te contactaremos pronto.");
         return "redirect:/contacto?enviado";
     }
-}  
+}

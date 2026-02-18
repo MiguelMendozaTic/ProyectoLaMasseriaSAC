@@ -341,12 +341,14 @@
                             </div>
                         </div>
                         
-                        <a href="/reservaciones" class="nav-item nav-link" th:classappend="${activePage == 'reservaciones' ? 'active' : ''}">
+                        <!-- ===== ENLACES PROTEGIDOS - SOLO VISIBLES CON SESIÓN ===== -->
+                        <a th:if="${session.usuario != null}" href="/reservaciones" class="nav-item nav-link" th:classappend="${activePage == 'reservaciones' ? 'active' : ''}">
                             <i class="fa fa-calendar-check mr-1"></i>Reservas
                         </a>
-                        <a href="/pedidos" class="nav-item nav-link" th:classappend="${activePage == 'pedidos' ? 'active' : ''}">
+                        <a th:if="${session.usuario != null}" href="/pedidos" class="nav-item nav-link" th:classappend="${activePage == 'pedidos' ? 'active' : ''}">
                             <i class="fa fa-clipboard-list mr-1"></i>Pedidos
                         </a>
+                        
                         <a href="/contacto" class="nav-item nav-link" th:classappend="${activePage == 'contacto' ? 'active' : ''}">
                             <i class="fa fa-envelope mr-1"></i>Contacto
                         </a>
@@ -354,6 +356,7 @@
                     
                     <!-- Separador y botones de usuario - CON ENLACES DIRECTOS -->
                     <div class="navbar-nav ml-2">
+                        <!-- Usuario NO logueado -->
                         <div class="nav-item dropdown" th:if="${session.usuario == null}">
                             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button">
                                 <i class="fa fa-user-circle mr-1"></i> Mi Cuenta
@@ -369,10 +372,11 @@
                             </div>
                         </div>
                         
+                        <!-- Usuario logueado -->
                         <div class="nav-item dropdown" th:if="${session.usuario != null}">
                             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button">
                                 <i class="fa fa-user-circle mr-1"></i> 
-                                <span th:text="${session.usuarioNombre}">Usuario</span>
+                                <span th:text="${session.usuario.nombres} ?: 'Usuario'">Usuario</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right">
                                 <a href="/perfil" class="dropdown-item">
