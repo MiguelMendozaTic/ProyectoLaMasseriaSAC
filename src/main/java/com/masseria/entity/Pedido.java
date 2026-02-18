@@ -1,0 +1,91 @@
+package com.masseria.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "pedidos")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Pedido {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "fecha_pedido", nullable = false)
+    private LocalDateTime fechaPedido;
+    
+    @Column(nullable = false)
+    private String estado;
+    
+    @Column(precision = 10, scale = 2)
+    private BigDecimal total;
+    
+    // RELACIÓN CON USUARIO
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Usuario usuario;
+    
+    @Column(name = "direccion_entrega")
+    private String direccionEntrega;
+    
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Builder.Default  // <-- Agregado para mantener la inicialización
+    private List<DetallePedido> detalles = new ArrayList<>();
+    
+    // Constructor personalizado con valores por defecto
+    public Pedido(Usuario usuario) {
+        this.fechaPedido = LocalDateTime.now();
+        this.estado = "PENDIENTE";
+        this.total = BigDecimal.ZERO;
+        this.usuario = usuario;
+        this.detalles = new ArrayList<>();
+    }
+    
+    // Método helper para obtener el ID del usuario
+    public Long getUsuarioId() {
+        return usuario != null ? usuario.getId() : null;
+    }
+    
+    // Métodos helper para la relación bidireccional
+    public void addDetalle(DetallePedido detalle) {
+        detalles.add(detalle);
+        detalle.setPedido(this);
+        calcularTotal();
+    }
+    
+    public void removeDetalle(DetallePedido detalle) {
+        detalles.remove(detalle);
+        detalle.setPedido(null);
+        calcularTotal();
+    }
+    
+    private void calcularTotal() {
+        this.total = detalles.stream()
+            .map(DetallePedido::getSubtotal)
+            .filter(subtotal -> subtotal != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    
+    // Método de fábrica para crear pedidos
+    public static Pedido crearPedido(Usuario usuario) {
+        return Pedido.builder()
+            .fechaPedido(LocalDateTime.now())
+            .estado("PENDIENTE")
+            .total(BigDecimal.ZERO)
+            .usuario(usuario)
+            .detalles(new ArrayList<>())  // Inicialización explícita en builder
+            .build();
+    }
+}

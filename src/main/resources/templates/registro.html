@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head}">
+    <title>Registro - La Masseria</title>
+</head>
+<body>
+    <div th:replace="~{base :: navbar}"></div>
+
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header" style="background: #c49b63; color: white;">
+                        <h4 class="mb-0"><i class="fa fa-user-plus mr-2"></i>Registro de Usuario</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/registro}" method="POST">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-user text-primary mr-1"></i>Nombres</label>
+                                        <input type="text" class="form-control" name="nombres" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-user text-primary mr-1"></i>Apellidos</label>
+                                        <input type="text" class="form-control" name="apellidos" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-id-card text-primary mr-1"></i>DNI</label>
+                                        <input type="text" class="form-control" name="dni" maxlength="8" pattern="[0-9]{8}" title="8 dígitos numéricos" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-phone text-primary mr-1"></i>Teléfono</label>
+                                        <input type="tel" class="form-control" name="telefono" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fa fa-map-marker-alt text-primary mr-1"></i>Dirección</label>
+                                <input type="text" class="form-control" name="direccion" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fa fa-envelope text-primary mr-1"></i>Correo Electrónico</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-lock text-primary mr-1"></i>Contraseña</label>
+                                        <input type="password" class="form-control" name="password" minlength="6" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-lock text-primary mr-1"></i>Verificar Contraseña</label>
+                                        <input type="password" class="form-control" name="confirmPassword" minlength="6" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group form-check">
+                                <input type="checkbox" class="form-check-input" id="terminos" required>
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los <a href="#" target="_blank">términos y condiciones</a>
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-block">Registrarse</button>
+                        </form>
+                        <div class="text-center mt-3">
+                            <a href="/login">¿Ya tienes cuenta? Inicia sesión aquí</a>
+                        </div>
+                        <div class="text-center mt-2">
+                            <a href="/">← Volver al inicio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{base :: footer}"></div>
+    <div th:replace="~{base :: scripts}"></div>
+    <div th:replace="~{base :: floating-buttons}"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('form').on('submit', function(e) {
+                var pass = $('input[name="password"]').val();
+                var confirm = $('input[name="confirmPassword"]').val();
+                if (pass !== confirm) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{base :: head}">
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Reservaciones - La Masseria</title>
+    
+    <!-- Estilos adicionales para el selector de mesas y datetimepicker -->
+    <link href="/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+    
+    <style>
+        /* Estilos para el selector de mesas */
+        .table-selector {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .tables {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .custom-table {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid #c49b63;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .custom-table:hover {
+            background: #c49b63;
+            transform: scale(1.1);
+            border-color: white;
+        }
+        
+        .custom-table.selected {
+            background: #c49b63;
+            border-color: white;
+            box-shadow: 0 0 15px #c49b63;
+        }
+        
+        /* Estilos para el formulario */
+        .bg-transparent {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+        
+        .bg-transparent::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        .bg-transparent option {
+            background: #33211d;
+            color: white;
+        }
+        
+        .border-primary {
+            border-color: #c49b63 !important;
+        }
+        
+        /* Estilos para el campo de mesa readonly */
+        #campoNumeroMesa {
+            cursor: pointer;
+        }
+        
+        /* Responsive para móviles */
+        @media (max-width: 768px) {
+            .tables {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .custom-table {
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar (usando fragmento) -->
+    <div th:replace="~{base :: navbar}"></div>
+
+    <!-- Page Header -->
+    <div class="container-fluid page-header mb-5 position-relative overlay-bottom">
+        <div class="d-flex flex-column align-items-center justify-content-center pt-0 pt-lg-5" style="min-height: 400px">
+            <h1 class="display-4 mb-3 mt-0 mt-lg-5 text-white text-uppercase">Solicita tu reserva</h1>
+            <div class="d-inline-flex mb-lg-5">
+                <p class="m-0 text-white"><a class="text-white" href="/">Inicio</a></p>
+                <p class="m-0 text-white px-2">/</p>
+                <p class="m-0 text-white">Reservaciones</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservaciones Inicio -->
+    <div class="container-fluid py-5">
+        <div class="container">
+            <div class="reservation position-relative overlay-top overlay-bottom">
+                <div class="row align-items-center" style="min-height: 100%;">
+                    <div class="col-lg-6 my-5 my-lg-0">
+                        <div class="p-5 d-flex flex-column justify-content-center h-100">
+                            <div class="mb-4">
+                                <h2 class="display-3 text-primary">Des. del 30%</h2>
+                                <h2 class="text-white">Con Tus Reservas Online</h2>
+                            </div>
+                            <p class="text-white">Reservar nunca fue tan delicioso. 
+                                Asegura tu mesa y déjate envolver por la magia de La Masseria.</p>
+                            <ul class="list-inline text-white m-0">
+                                <li class="py-2"><i class="fa fa-check text-primary mr-3"></i>Cada visita es un momento especial.</li>
+                                <li class="py-2"><i class="fa fa-check text-primary mr-3"></i>Cafés que enamoran y postres que abrazan el alma.</li>
+                                <li class="py-2"><i class="fa fa-check text-primary mr-3"></i>Ven y descubre la esencia de La Masseria.</li>
+                            </ul>
+                            
+                            <!-- Selector de Mesas -->
+                            <div class="table-selector mt-4">
+                                <h4 class="text-white mb-3">Selecciona Tu Mesa</h4>
+                                <div class="tables">
+                                    <button type="button" class="custom-table" data-id="1">1</button>
+                                    <button type="button" class="custom-table" data-id="2">2</button>
+                                    <button type="button" class="custom-table" data-id="3">3</button>
+                                    <button type="button" class="custom-table" data-id="4">4</button>
+                                    <button type="button" class="custom-table" data-id="5">5</button>
+                                    <button type="button" class="custom-table" data-id="6">6</button>
+                                    <button type="button" class="custom-table" data-id="7">7</button>
+                                    <button type="button" class="custom-table" data-id="8">8</button>
+                                    <button type="button" class="custom-table" data-id="9">9</button>
+                                    <button type="button" class="custom-table" data-id="10">10</button>
+                                    <button type="button" class="custom-table" data-id="11">11</button>
+                                    <button type="button" class="custom-table" data-id="12">12</button>
+                                </div>
+                                <!-- Campo oculto para guardar la mesa -->
+                                <input type="hidden" id="mesaSeleccionada" name="mesaSeleccionada" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="text-center p-5" style="background: rgba(51, 33, 29, .8);">
+                            <h1 class="text-white mb-4 mt-5">Reservar Mesa</h1>
+                            <form class="mb-5" method="POST" th:action="@{/reservaciones/guardar}">
+                                <div class="form-group">
+                                    <input type="text" name="nombre" class="form-control bg-transparent border-primary p-4" placeholder="Nombre completo" required />
+                                </div>
+                                <div class="form-group">
+                                    <input type="email" name="correo" class="form-control bg-transparent border-primary p-4" placeholder="Correo electrónico" required />
+                                </div>
+                                <div class="form-group">
+                                    <div class="date" id="date" data-target-input="nearest">
+                                        <input type="text" name="fecha" class="form-control bg-transparent border-primary p-4 datetimepicker-input" placeholder="Fecha" data-target="#date" data-toggle="datetimepicker" required />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="campoNumeroMesa" name="mesa" class="form-control bg-transparent border-primary p-4" placeholder="Número de mesa" readonly required />
+                                </div>
+                                <div class="form-group">
+                                    <div class="time" id="time" data-target-input="nearest">
+                                        <input type="text" name="hora" class="form-control bg-transparent border-primary p-4 datetimepicker-input" placeholder="Hora" data-target="#time" data-toggle="datetimepicker" required />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <select name="cantidadPersonas" class="custom-select bg-transparent border-primary px-4" style="height: 49px;" required>
+                                        <option value="" disabled selected>Cant. Personas</option>
+                                        <option value="1">1 persona</option>
+                                        <option value="2">2 personas</option>
+                                        <option value="3">3 personas</option>
+                                        <option value="4">4 personas</option>
+                                        <option value="5">5 personas</option>
+                                        <option value="6">6 personas</option>
+                                        <option value="7">7+ personas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <textarea name="notas" class="form-control bg-transparent border-primary p-4" rows="3" placeholder="Notas adicionales (alergias, preferencias, etc.)"></textarea>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary btn-block font-weight-bold py-3" type="submit">Reservar ahora</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Reservaciones Fin -->
+
+    <!-- Footer -->
+    <div th:replace="~{base :: footer}"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="~{base :: scripts}"></div>
+    
+    <!-- Scripts adicionales para datetimepicker y selector de mesas -->
+    <script src="/lib/tempusdominus/js/moment.min.js"></script>
+    <script src="/lib/tempusdominus/js/moment-timezone.min.js"></script>
+    <script src="/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+    
+    <script>
+        // Script para seleccionar la mesa y rellenar los campos
+        $(document).ready(function() {
+            const botonesMesa = document.querySelectorAll(".custom-table");
+            const campoMesa = document.getElementById("mesaSeleccionada");
+            const campoVisible = document.getElementById("campoNumeroMesa");
+
+            botonesMesa.forEach(btn => {
+                btn.addEventListener("click", function() {
+                    // Remover clase selected de todos los botones
+                    botonesMesa.forEach(b => b.classList.remove("selected"));
+                    
+                    // Agregar clase selected al botón actual
+                    this.classList.add("selected");
+                    
+                    const numeroMesa = this.getAttribute("data-id");
+                    campoMesa.value = numeroMesa;
+                    campoVisible.value = numeroMesa;
+                });
+            });
+            
+            // Inicializar datetimepicker para fecha
+            $('#date').datetimepicker({
+                format: 'YYYY-MM-DD',
+                minDate: moment().startOf('day')
+            });
+            
+            // Inicializar datetimepicker para hora
+            $('#time').datetimepicker({
+                format: 'HH:mm',
+                stepping: 30
+            });
+        });
+    </script>
+    
+    <!-- Botones flotantes -->
+    <div th:replace="~{base :: floating-buttons}"></div>
+</body>
+</html>
