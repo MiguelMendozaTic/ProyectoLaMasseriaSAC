@@ -48,17 +48,17 @@ public class AuthController {
             return "redirect:/login?error";
         }
     }
-    
+
     @GetMapping("/registro")
     public String registroForm(Model model) {
         model.addAttribute("activePage", "registro");
         return "registro";
     }
     
-    @PostMapping("/registro")
+   @PostMapping("/registro")
     public String registro(@ModelAttribute Usuario usuario,
-                           @RequestParam String confirmPassword,
-                           RedirectAttributes redirectAttributes) {
+                        @RequestParam String confirmPassword,
+                        RedirectAttributes redirectAttributes) {
         
         if (!usuario.getPassword().equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Las contraseñas no coinciden");
@@ -74,6 +74,9 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("error", "El DNI ya está registrado");
             return "redirect:/registro?error=dni";
         }
+        
+        // ASIGNAR USERNAME (usando el email como username)
+        usuario.setUsername(usuario.getEmail());  // <-- ESTA LÍNEA ES LA CLAVE
         
         usuario.setActivo(true);
         usuario.setRol("CLIENTE");
@@ -99,6 +102,6 @@ public class AuthController {
         }
         model.addAttribute("usuario", usuario);
         model.addAttribute("activePage", "perfil");
-        return "perfil";
+        return "perfil";  // Busca perfil.html en templates/
     }
 }
