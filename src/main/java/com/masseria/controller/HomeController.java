@@ -1,11 +1,13 @@
 package com.masseria.controller;
 
 import com.masseria.entity.Contacto;
+import com.masseria.entity.DetallePedido;
 import com.masseria.entity.Pedido;
+import com.masseria.entity.Producto;
 import com.masseria.entity.Reservacion;
 import com.masseria.entity.Usuario;
 import com.masseria.service.ContactoService;
-import com.masseria.service.PedidoService;  // <-- AGREGAR IMPORT
+import com.masseria.service.PedidoService;
 import com.masseria.service.ProductoService;
 import com.masseria.service.CategoriaService;
 import com.masseria.service.ReservacionService;
@@ -15,13 +17,18 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Controller
 public class HomeController {
@@ -39,34 +46,21 @@ public class HomeController {
     private ReservacionService reservacionService;
     
     @Autowired
-    private PedidoService pedidoService;  // <-- AGREGAR
+    private PedidoService pedidoService;
 
-    // ========== PÁGINAS PÚBLICAS (NO REQUIEREN LOGIN) ==========
+    // ========== PÁGINAS PÚBLICAS ==========
     
     @GetMapping("/")
     public String inicio(Model model) {
-        // Productos por categorías
         model.addAttribute("desayunos", productoService.obtenerPorCategoria("Desayuno"));
         model.addAttribute("bebidasCalientes", productoService.obtenerPorCategoria("Bebida Caliente"));
         model.addAttribute("bebidasFrias", productoService.obtenerPorCategoria("Bebida Fría"));
         model.addAttribute("postres", productoService.obtenerPorCategoria("Postre"));
-        
-        // Productos destacados y novedades
         model.addAttribute("destacados", productoService.obtenerDestacados());
         model.addAttribute("novedades", productoService.obtenerTodos());
-        
-        // Categorías para el menú
         model.addAttribute("categorias", categoriaService.obtenerTodas());
-        
-        // Página activa
         model.addAttribute("activePage", "inicio");
-        
         return "index";
-    }
-
-    @GetMapping("/index")
-    public String redireccionar() {
-        return "redirect:/";
     }
 
     @GetMapping("/nosotros")
@@ -81,17 +75,7 @@ public class HomeController {
         return "contacto";
     }
 
-    @GetMapping("/about")
-    public String about() {
-        return "about";
-    }
-
-    @GetMapping("/contact")
-    public String contact() {
-        return "contacto";
-    }
-
-    // ========== PÁGINAS PROTEGIDAS (REQUIEREN LOGIN) ==========
+    // ========== PÁGINAS PROTEGIDAS ==========
     
     @GetMapping("/reservaciones")
     public String reservaciones(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
@@ -102,22 +86,17 @@ public class HomeController {
             return "redirect:/login?acceso=denegado";
         }
         
-        // ===== DATOS PARA PRE-LLENAR EL FORMULARIO =====
         model.addAttribute("usuario", usuario);
         model.addAttribute("nombreUsuario", usuario.getNombres() + " " + usuario.getApellidos());
         model.addAttribute("emailUsuario", usuario.getEmail());
         model.addAttribute("telefonoUsuario", usuario.getTelefono() != null ? usuario.getTelefono() : "");
-        
-        // Fecha mínima (hoy)
         model.addAttribute("fechaMinima", LocalDate.now().toString());
         
-        // Horarios disponibles
         List<String> horarios = List.of(
             "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", 
             "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"
         );
         model.addAttribute("horarios", horarios);
-        
         model.addAttribute("activePage", "reservaciones");
         return "reservacion";
     }
@@ -131,18 +110,16 @@ public class HomeController {
             return "redirect:/login?acceso=denegado";
         }
         
-        // ===== DATOS PARA PRE-LLENAR EL FORMULARIO =====
         model.addAttribute("usuario", usuario);
         model.addAttribute("nombreCompleto", usuario.getNombres() + " " + usuario.getApellidos());
         model.addAttribute("email", usuario.getEmail());
         model.addAttribute("telefono", usuario.getTelefono() != null ? usuario.getTelefono() : "");
         model.addAttribute("direccion", usuario.getDireccion() != null ? usuario.getDireccion() : "");
-        
         model.addAttribute("activePage", "pedidos");
         return "pedidos";
     }
 
-    // ========== PROCESAMIENTO DE FORMULARIOS PROTEGIDOS ==========
+    // ========== PROCESAMIENTO DE RESERVACIONES ==========
     
     @PostMapping("/reservaciones/guardar")
     public String guardarReservacion(
@@ -158,12 +135,11 @@ public class HomeController {
         
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario == null) {
-            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para guardar una reservación");
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión");
             return "redirect:/login";
         }
         
         try {
-            // ===== CREAR Y GUARDAR LA RESERVACIÓN =====
             Reservacion reservacion = new Reservacion();
             reservacion.setNombre(usuario.getNombres() + " " + usuario.getApellidos());
             reservacion.setEmail(usuario.getEmail());
@@ -175,86 +151,102 @@ public class HomeController {
             reservacion.setUsuario(usuario);
             reservacion.setEstado("PENDIENTE");
             
-            // Verificar disponibilidad
             if (!reservacionService.verificarDisponibilidad(LocalDate.parse(fecha), LocalTime.parse(hora))) {
-                redirectAttributes.addFlashAttribute("error", "Lo sentimos, ese horario ya no está disponible");
+                redirectAttributes.addFlashAttribute("error", "Ese horario ya no está disponible");
                 return "redirect:/reservaciones?error=horario";
             }
             
             reservacionService.guardar(reservacion);
-            
-            System.out.println("✅ Reservación guardada - ID: " + reservacion.getId());
-            System.out.println("   Usuario: " + usuario.getEmail());
-            System.out.println("   Fecha: " + fecha + " " + hora);
-            System.out.println("   Personas: " + cantidadPersonas);
-            
-            redirectAttributes.addFlashAttribute("mensaje", "¡Reservación realizada con éxito! Te esperamos.");
+            redirectAttributes.addFlashAttribute("mensaje", "¡Reservación realizada con éxito!");
             return "redirect:/reservaciones?exito";
             
         } catch (Exception e) {
-            System.err.println("❌ Error al guardar reservación: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("error", "Error al procesar la reservación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al procesar la reservación");
             return "redirect:/reservaciones?error";
         }
     }
 
+    // ===== MÉTODO CORREGIDO PARA GUARDAR PEDIDOS CON DETALLES =====
     @PostMapping("/pedidos/guardar")
-    public String guardarPedido(
+    @ResponseBody
+    public Map<String, Object> guardarPedido(
             HttpSession session,
             @RequestParam String cliente,
             @RequestParam String correo,
             @RequestParam String telefono,
-            @RequestParam Double total,
+            @RequestParam String total,
             @RequestParam String metodoEntrega,
             @RequestParam(required = false) String direccion,
             @RequestParam String metodoPago,
+            @RequestParam(required = false) String notas,
             @RequestParam String detalles,
             RedirectAttributes redirectAttributes) {
         
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario == null) {
-            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para guardar un pedido");
-            return "redirect:/login";
+            return Map.of("success", false, "message", "Debes iniciar sesión");
         }
         
         try {
-            // ===== CREAR EL PEDIDO CON LOS DATOS DEL USUARIO =====
+            // Crear el pedido
             Pedido pedido = new Pedido();
             pedido.setUsuario(usuario);
-            pedido.setClienteNombre(usuario.getNombres() + " " + usuario.getApellidos());
-            pedido.setClienteEmail(usuario.getEmail());
+            pedido.setClienteNombre(cliente);
+            pedido.setClienteEmail(correo);
             pedido.setClienteTelefono(telefono);
             pedido.setTipoEntrega(metodoEntrega);
             pedido.setMetodoPago(metodoPago);
-            pedido.setNotas(detalles);
-            pedido.setTotal(BigDecimal.valueOf(total != null ? total : 0.0));
+            pedido.setNotas(notas);
+            pedido.setTotal(new BigDecimal(total));
+            pedido.setEstado(PedidoService.ESTADO_PENDIENTE);
+            pedido.setFechaPedido(LocalDateTime.now());
             
-            // Si es envío a domicilio, guardar dirección
+            // Guardar dirección según tipo de entrega
             if ("DOMICILIO".equals(metodoEntrega) && direccion != null && !direccion.isEmpty()) {
                 pedido.setDireccionEntrega(direccion);
-            } else if ("RECOGER".equals(metodoEntrega)) {
+            } else {
                 pedido.setDireccionEntrega("RECOGER EN TIENDA");
             }
             
-            // Guardar el pedido
-            pedidoService.guardar(pedido);
+            // Parsear los detalles del carrito
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> detallesList = mapper.readValue(detalles, new TypeReference<List<Map<String, Object>>>() {});
             
-            System.out.println("✅ Pedido guardado - ID: " + pedido.getId());
+            // Crear y agregar cada detalle al pedido
+            for (Map<String, Object> item : detallesList) {
+                Long productoId = Long.parseLong(item.get("id").toString());
+                Integer cantidad = Integer.parseInt(item.get("cantidad").toString());
+                
+                Producto producto = productoService.obtenerPorId(productoId)
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + productoId));
+                
+                DetallePedido detalle = new DetallePedido();
+                detalle.setProducto(producto);
+                detalle.setCantidad(cantidad);
+                detalle.setPrecioUnitario(producto.getPrecio());
+                detalle.setSubtotal(producto.getPrecio().multiply(new BigDecimal(cantidad)));
+                
+                // Agregar el detalle al pedido (esto también establece la relación bidireccional)
+                pedido.addDetalle(detalle);
+            }
+            
+            // Guardar el pedido (con cascade = CascadeType.ALL, los detalles se guardan automáticamente)
+            Pedido pedidoGuardado = pedidoService.guardar(pedido);
+            
+            System.out.println("✅ Pedido guardado en BD - ID: " + pedidoGuardado.getId());
             System.out.println("   Usuario: " + usuario.getEmail());
             System.out.println("   Total: S/ " + total);
-            System.out.println("   Tipo entrega: " + metodoEntrega);
+            System.out.println("   Detalles: " + pedidoGuardado.getDetalles().size() + " productos");
             
-            redirectAttributes.addFlashAttribute("mensaje", "¡Pedido realizado con éxito! Te contactaremos pronto.");
-            return "redirect:/pedidos?exito";
+            return Map.of("success", true, "message", "Pedido guardado correctamente");
             
         } catch (Exception e) {
-            System.err.println("❌ Error al guardar pedido: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("error", "Error al procesar el pedido: " + e.getMessage());
-            return "redirect:/pedidos?error";
+            e.printStackTrace();
+            return Map.of("success", false, "message", "Error al guardar el pedido: " + e.getMessage());
         }
     }
 
-    // ========== FORMULARIO PÚBLICO (NO REQUIERE LOGIN) ==========
+    // ========== FORMULARIO DE CONTACTO ==========
     
     @PostMapping("/mensaje")
     public String enviarMensaje(
@@ -265,14 +257,12 @@ public class HomeController {
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
-        // Crear objeto Contacto
         Contacto contacto = new Contacto();
         contacto.setNombre(nombre);
         contacto.setEmail(email);
         contacto.setAsunto(asunto);
         contacto.setMensaje(mensaje);
         
-        // Si el usuario está logueado, asociarlo automáticamente
         Usuario usuario = (Usuario) session.getAttribute("usuario");
         if (usuario != null) {
             contacto.setUsuario(usuario);
@@ -281,9 +271,7 @@ public class HomeController {
         
         contactoService.guardar(contacto);
         
-        System.out.println("📧 Mensaje guardado de " + nombre + " (" + email + "): " + asunto);
-        
-        redirectAttributes.addFlashAttribute("mensaje", "Mensaje enviado con éxito. Te contactaremos pronto.");
+        redirectAttributes.addFlashAttribute("mensaje", "Mensaje enviado con éxito");
         return "redirect:/contacto?enviado";
     }
 }

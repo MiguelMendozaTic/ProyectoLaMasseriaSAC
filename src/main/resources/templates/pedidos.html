@@ -91,7 +91,7 @@
                 <h1 class="display-4">Realiza tus pedidos con facilidad</h1>
             </div>
 
-            <!-- ===== DATOS DEL USUARIO (PRE-LLENADOS) ===== -->
+            <!-- ===== DATOS DEL USUARIO (PRE-LLENADOS) =====
             <div class="user-info" th:if="${usuario != null}">
                 <div class="row">
                     <div class="col-md-4">
@@ -109,7 +109,7 @@
                         <p><i class="fas fa-map-marker-alt"></i> <strong>Dirección registrada:</strong> <span th:text="${direccion}"></span></p>
                     </div>
                 </div>
-            </div>
+            </div>-->
 
             <!-- Mensaje de carrito vacío -->
             <div id="empty-cart" style="text-align: center; padding: 50px; background: #f8f9fa; border-radius: 12px; margin: 30px 0; display: none;">
@@ -186,21 +186,27 @@
                     
                     <!-- Campos visibles (pueden editarse) -->
                     <div style="margin-bottom: 15px;">
-                        <label for="nombre" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;">Nombre completo</label>
-                        <input type="text" style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
+                        <label for="nombre" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;"><i class="fas fa-user" style="color: #c49b63; margin-right: 8px;"></i>Nombre completo</label>
+                        <input type="text" style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px  15px;" 
                                id="nombre" name="nombre" th:value="${nombreCompleto}" required>
                     </div>
                     
                     <div style="margin-bottom: 15px;">
-                        <label for="correo" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;">Correo electrónico</label>
+                        <label for="correo" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;"><i class="fas fa-envelope" style="color: #c49b63; margin-right: 8px;"></i>Correo electrónico</label>
                         <input type="email" style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
                                id="correo" name="correo" th:value="${email}" required>
                     </div>
                     
                     <div style="margin-bottom: 15px;">
-                        <label for="telefono" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;">Teléfono</label>
+                        <label for="telefono" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;"><i class="fas fa-phone" style="color: #c49b63; margin-right: 8px;"></i>Teléfono</label>
                         <input type="tel" style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
                                id="telefono" name="telefono" th:value="${telefono}" required>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label for="nota" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;"><i class="fas fa-sticky-note" style="color: #c49b63; margin-right: 8px;"></i>Nota</label>
+                        <input type="text" style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
+                               id="notas" name="notas" placeholder="Escribe una nota para tu pedido (opcional)">
                     </div>
                     
                     <!-- Campos ocultos para los datos del pedido -->
@@ -210,10 +216,11 @@
                     <input type="hidden" name="detalles" id="detalles-hidden" value="">
                     
                     <div style="margin-bottom: 15px;">
-                        <label for="metodo-pago" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;">Método de pago</label>
+                        <label for="metodo-pago" style="font-weight: 500; color: #555; display: block; margin-bottom: 5px;"><i class="fas fa-credit-card" style="color: #c49b63; margin-right: 8px;"></i>Método de pago</label>
                         <select style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
                                 id="metodo-pago" name="metodoPago" required>
                             <option value="">Selecciona un método</option>
+                            <option value="EFECTIVO">Efectivo</option>
                             <option value="YAPE">Yape</option>
                             <option value="PLIN">Plin</option>
                             <option value="TARJETA">Tarjeta</option>
@@ -282,15 +289,6 @@
 
     $(document).ready(function() {
         cargarCarrito();
-        
-        // Verificar si hay parámetro de éxito en la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('exito')) {
-            mostrarMensaje('success', '¡Pedido realizado con éxito! Te contactaremos pronto.');
-        }
-        if (urlParams.has('error')) {
-            mostrarMensaje('danger', 'Error al procesar el pedido. Por favor intenta nuevamente.');
-        }
         
         // Mostrar/ocultar campo de dirección
         $('input[name="metodoEntrega"]').change(function() {
@@ -405,6 +403,7 @@
                 metodoEntrega: $('#metodoEntrega-hidden').val(),
                 direccion: $('#direccion-hidden').val() || '',
                 metodoPago: $('#metodo-pago').val(),
+                notas: $('#notas').val(),
                 detalles: $('#detalles-hidden').val()
             };
             
