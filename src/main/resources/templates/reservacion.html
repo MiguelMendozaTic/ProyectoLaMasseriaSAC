@@ -5,6 +5,9 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Reservaciones - La Masseria</title>
     
+    <!-- Estilos adicionales para el selector de mesas y datetimepicker -->
+    <link href="/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+    
     <style>
         /* Estilos para el selector de mesas */
         .table-selector {
@@ -99,13 +102,51 @@
             color: #333333 !important;
         }
         
-        /* Mensajes de alerta */
+        /* Mensajes de alerta - CORREGIDO: sobre el navbar pero sin bloquear */
         .alert-custom {
             position: fixed;
-            top: 20px;
+            top: 80px;  /* Espacio para el navbar */
             right: 20px;
             z-index: 9999;
             min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border-left: 5px solid;
+            pointer-events: none;  /* Permite hacer clic a través del mensaje */
+            animation: slideIn 0.3s ease;
+        }
+        
+        .alert-custom .close {
+            pointer-events: auto;  /* El botón cerrar sigue siendo clickeable */
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
         }
         
         /* Botón de reservar */
@@ -131,6 +172,7 @@
             padding: 10px;
             border-radius: 10px;
             width: 100%;
+            height: 49px;
         }
         
         input[type="date"]::-webkit-calendar-picker-indicator,
@@ -152,34 +194,19 @@
                 height: 50px;
                 font-size: 1rem;
             }
+            
+            .alert-custom {
+                top: 60px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Mensajes flotantes de éxito/error -->
-    <div th:if="${param.exito != null}" class="alert alert-success alert-custom alert-dismissible fade show" role="alert">
-        <i class="fa fa-check-circle mr-2"></i>
-        <span th:text="${mensaje} ?: '¡Reservación realizada con éxito!'"></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    
-    <div th:if="${param.error != null}" class="alert alert-danger alert-custom alert-dismissible fade show" role="alert">
-        <i class="fa fa-exclamation-circle mr-2"></i>
-        <span th:text="${error} ?: 'Error en la reservación'"></span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    
-    <div th:if="${param.horario != null}" class="alert alert-warning alert-custom alert-dismissible fade show" role="alert">
-        <i class="fa fa-clock mr-2"></i>
-        <span>Lo sentimos, ese horario ya no está disponible</span>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
+    <!-- Mensajes flotantes de éxito/error - JavaScript los manejará -->
+    <div id="mensaje-container"></div>
 
     <!-- Navbar (usando fragmento) -->
     <div th:replace="~{base :: navbar}"></div>
@@ -293,11 +320,11 @@
                                            placeholder="Selecciona una mesa" readonly required />
                                 </div>
                                 
-                                <!-- Hora con input nativo HTML5 -->
+                                <!-- Hora con input nativo HTML5 - SIN RESTRICCIÓN DE MINUTOS -->
                                 <div class="form-group text-left">
                                     <label class="text-white">Hora de reserva</label>
                                     <input type="time" name="hora" class="form-control" 
-                                           min="09:00" max="22:00" step="1800" required />
+                                           min="09:00" max="22:00" required />
                                     <small class="text-white-50">Horario: 9:00 AM - 10:00 PM</small>
                                 </div>
                                 
@@ -344,7 +371,54 @@
     <div th:replace="~{base :: scripts}"></div>
     
     <script>
+        // Función para mostrar mensajes flotantes
+        function mostrarMensaje(tipo, texto) {
+            const container = document.getElementById('mensaje-container');
+            const mensajeDiv = document.createElement('div');
+            mensajeDiv.className = `alert alert-${tipo} alert-custom alert-dismissible fade show`;
+            mensajeDiv.setAttribute('role', 'alert');
+            mensajeDiv.innerHTML = `
+                <i class="fa ${tipo === 'success' ? 'fa-check-circle' : tipo === 'danger' ? 'fa-exclamation-circle' : 'fa-clock'} mr-2"></i>
+                <span>${texto}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            `;
+            
+            container.appendChild(mensajeDiv);
+            
+            // Auto-cerrar después de 3 segundos
+            setTimeout(() => {
+                if (mensajeDiv.parentNode) {
+                    mensajeDiv.classList.remove('show');
+                    setTimeout(() => {
+                        if (mensajeDiv.parentNode) {
+                            mensajeDiv.remove();
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+
         $(document).ready(function() {
+            // Verificar parámetros URL y mostrar mensajes
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('exito')) {
+                mostrarMensaje('success', '¡Reservación realizada con éxito! Te esperamos.');
+            }
+            
+            if (urlParams.has('error')) {
+                const errorMsg = urlParams.get('error') === 'horario' 
+                    ? 'Lo sentimos, ese horario ya no está disponible'
+                    : 'Error en la reservación';
+                mostrarMensaje('danger', errorMsg);
+            }
+            
+            if (urlParams.has('horario')) {
+                mostrarMensaje('warning', 'Lo sentimos, ese horario ya no está disponible');
+            }
+            
             const botonesMesa = document.querySelectorAll(".custom-table");
             const campoMesaOculto = document.getElementById("mesaSeleccionada");
             const campoVisible = document.getElementById("campoNumeroMesa");
@@ -373,11 +447,17 @@
                 fechaInput.value = manana.toISOString().split('T')[0];
             }
             
+            // Establecer hora por defecto
+            const horaInput = document.querySelector('input[type="time"][name="hora"]');
+            if (horaInput) {
+                horaInput.value = "12:00";
+            }
+            
             // Validación antes de enviar
             $('#formReserva').on('submit', function(e) {
                 if (!campoVisible.value) {
                     e.preventDefault();
-                    alert('❌ Por favor, selecciona una mesa');
+                    mostrarMensaje('warning', 'Por favor, selecciona una mesa');
                     return false;
                 }
             });

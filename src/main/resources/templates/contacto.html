@@ -99,11 +99,70 @@
             transform: scale(1.1);
             color: white;
         }
+        
+        /* Estilos para mensajes de alerta */
+        .alert-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
+        }
     </style>
 </head>
 <body>
     <!-- Navbar (usando fragmento de base.html) -->
     <div th:replace="~{base :: navbar}"></div>
+
+    <!-- Mensajes flotantes de éxito/error -->
+    <div th:if="${param.enviado != null}" class="alert alert-success alert-custom alert-dismissible fade show" role="alert">
+        <i class="fa fa-check-circle mr-2"></i>
+        <span th:text="${mensajeExito} ?: '¡Mensaje enviado con éxito! Te contactaremos pronto.'"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    
+    <div th:if="${param.error != null}" class="alert alert-danger alert-custom alert-dismissible fade show" role="alert">
+        <i class="fa fa-exclamation-circle mr-2"></i>
+        <span th:text="${mensajeError} ?: 'Error al enviar el mensaje. Por favor intenta nuevamente.'"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
 
     <!-- Page Header Inicio -->
     <div class="container-fluid page-header mb-5 position-relative overlay-bottom">
@@ -163,13 +222,13 @@
                 <div class="col-lg-6 mb-5">
                     <div style="background: white; border-radius: 16px; padding: 35px; box-shadow: 0 8px 25px rgba(196,155,99,0.1); border: 1px solid rgba(196,155,99,0.2);">
                         <h3 style="color: #333; font-weight: 700; margin-bottom: 25px; font-size: 1.8rem; position: relative; padding-bottom: 15px;">Envíanos un mensaje</h3>
-                        <form action="/contacto/guardar" method="POST" th:action="@{/contacto/guardar}">
+                        <form action="/mensaje" method="POST" th:action="@{/mensaje}">
                             <div style="margin-bottom: 20px;">
                                 <input type="text" class="form-control" name="nombre" placeholder="Nombre completo" required
                                        style="width: 100%; border: 2px solid #e0d6cc; border-radius: 12px; padding: 15px 20px; font-size: 1rem; background: white; box-sizing: border-box;">
                             </div>
                             <div style="margin-bottom: 20px;">
-                                <input type="email" class="form-control" name="correo" placeholder="Correo electrónico" required
+                                <input type="email" class="form-control" name="email" placeholder="Correo electrónico" required
                                        style="width: 100%; border: 2px solid #e0d6cc; border-radius: 12px; padding: 15px 20px; font-size: 1rem; background: white; box-sizing: border-box;">
                             </div>
                             <div style="margin-bottom: 20px;">
@@ -197,34 +256,15 @@
     <!-- Scripts (usando fragmento de base.html) -->
     <div th:replace="~{base :: scripts}"></div>
 
-    <!-- Script para el formulario de contacto -->
+    <!-- Script para auto-cerrar mensajes -->
     <script>
         $(document).ready(function() {
-            // Manejar el envío del formulario
-            $('form[th\\:action*="contacto"]').on('submit', function(e) {
-                e.preventDefault();
-                
-                // Obtener datos del formulario
-                const nombre = $('input[name="nombre"]').val();
-                const correo = $('input[name="correo"]').val();
-                const asunto = $('input[name="asunto"]').val();
-                const mensaje = $('textarea[name="mensaje"]').val();
-                
-                // Validar campos
-                if (!nombre || !correo || !asunto || !mensaje) {
-                    alert('Por favor completa todos los campos');
-                    return;
-                }
-                
-                // Aquí iría la lógica para enviar el mensaje al servidor
-                console.log('Mensaje enviado:', { nombre, correo, asunto, mensaje });
-                
-                // Mostrar mensaje de éxito
-                alert('¡Mensaje enviado con éxito! Te contactaremos pronto.');
-                
-                // Limpiar formulario
-                this.reset();
-            });
+            // Auto-cerrar mensajes después de 5 segundos
+            setTimeout(function() {
+                $('.alert-custom').fadeOut(500, function() {
+                    $(this).remove();
+                });
+            }, 5000);
         });
     </script>
     

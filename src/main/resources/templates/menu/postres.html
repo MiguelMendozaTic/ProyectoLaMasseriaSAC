@@ -120,7 +120,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            width: 65px;
+            width: 75px;
             height: 65px;
             background: #c49b63;
             color: white;
@@ -135,6 +135,7 @@
             border: 3px solid white;
             z-index: 10;
             line-height: 1.2;
+            text-align: center;
         }
         
         .price-tag::before {
@@ -329,274 +330,44 @@
 
     <!-- Sección-Postres Inicio -->
     <section class="menu1-section">
-        <h1>Postres</h1>
+        <h1 th:text="${titulo}">Postres</h1>
         <div class="menu1-items">
-            <!-- Producto 1 - Brownies Caseros -->
-            <div class="item" data-id="32" data-nombre="Brownies Caseros" data-precio="10">
-                <div class="price-tag">10</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_brownies.jpg" alt="Brownies Caseros" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Brownies suaves y húmedos con intenso sabor a chocolate, hechos de manera artesanal.</p>
-                    </div>
-                </div>
-                <h3>Brownies Caseros</h3>
-                              
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(32, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-32" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(32, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(32)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
+            <!-- Mensaje si no hay productos -->
+            <div th:if="${#lists.isEmpty(productos)}" class="text-center w-100">
+                <p>No hay productos disponibles en esta categoría.</p>
             </div>
             
-            <!-- Producto 2 - Cheesecake -->
-            <div class="item" data-id="33" data-nombre="Cheesecake" data-precio="12">
-                <div class="price-tag">12</div>
+            <!-- Iteración sobre productos de la BD -->
+            <div th:each="producto : ${productos}" class="item" 
+                 th:data-id="${producto.id}" 
+                 th:data-nombre="${producto.nombre}" 
+                 th:data-precio="${producto.precio}">
+                <div class="price-tag">
+                    <span style="font-size: 0.7rem; font-weight: normal; margin-right: 2px;">S/</span>
+                    <span th:text="${#numbers.formatInteger(producto.precio, 1)}">15</span>
+                </div>
                 <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
                      onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
                      onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_cheesecakeFresa.jpg" alt="Cheesecake" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img th:src="${producto.imagenUrl != null ? producto.imagenUrl : '/img/default-product.jpg'}" 
+                         th:alt="${producto.nombre}" 
+                         style="width: 100%; height: 100%; object-fit: cover;">
                     <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Tarta de queso cremosa con base de galleta crujiente y mermelada de fresa casera.</p>
+                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;" th:text="${producto.descripcion != null ? producto.descripcion : 'Delicioso producto de nuestra cafetería.'}">Descripción del producto</p>
                     </div>
                 </div>
-                <h3>Cheesecake</h3>
-                                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(33, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-33" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(33, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(33)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 3 - Tiramisú -->
-            <div class="item" data-id="34" data-nombre="Tiramisú" data-precio="15">
-                <div class="price-tag">15</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_tiramisu.avif" alt="Tiramisú" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Clásico italiano con capas de bizcocho, café, cacao y queso mascarpone.</p>
-                    </div>
-                </div>
-                <h3>Tiramisú</h3>
-                                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(34, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-34" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(34, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(34)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 4 - Helado de Vainilla -->
-            <div class="item" data-id="35" data-nombre="Helado de Vainilla" data-precio="8">
-                <div class="price-tag">8</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_heladoVainilla.jpg" alt="Helado de Vainilla" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Helado cremoso de vainilla natural, preparado artesanalmente con leche fresca.</p>
-                    </div>
-                </div>
-                <h3>Helado de Vainilla</h3>
+                <h3 th:text="${producto.nombre}">Nombre del producto</h3>
                 
                 <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(35, -1)">−</span>
+                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" th:onclick="'cambiarCantidad(' + ${producto.id} + ', -1)'">−</span>
                     
-                    <input type="number" value="1" min="1" max="10" id="qty-35" readonly 
+                    <input type="number" value="1" min="1" max="10" th:id="'qty-' + ${producto.id}" readonly 
                            style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
                     
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(35, 1)">+</span>
+                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" th:onclick="'cambiarCantidad(' + ${producto.id} + ', 1)'">+</span>
                 </div>
                 
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(35)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 5 - Mousse de Chocolate -->
-            <div class="item" data-id="36" data-nombre="Mousse de Chocolate" data-precio="11">
-                <div class="price-tag">11</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_mousseChocolate.jpeg" alt="Mousse de Chocolate" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Postre esponjoso y ligero de chocolate, con una textura suave que se derrite en el paladar.</p>
-                    </div>
-                </div>
-                <h3>Mousse de Chocolate</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(36, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-36" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(36, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(36)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 6 - Galletas Artesanales -->
-            <div class="item" data-id="37" data-nombre="Galletas Artesanales" data-precio="9">
-                <div class="price-tag">9</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_galletasArtesanales.jpg" alt="Galletas Artesanales" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Galletas hechas a mano con chispas de chocolate, crujientes por fuera y suaves por dentro.</p>
-                    </div>
-                </div>
-                <h3>Galletas Artesanales</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(37, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-37" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(37, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(37)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 7 - Tarta de Limón -->
-            <div class="item" data-id="38" data-nombre="Tarta de Limón" data-precio="10">
-                <div class="price-tag">10</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_tartaLimon.jpg" alt="Tarta de Limón" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Equilibrio perfecto entre acidez y dulzura, con base crujiente y merengue suave.</p>
-                    </div>
-                </div>
-                <h3>Tarta de Limón</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(38, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-38" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(38, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(38)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 8 - Flan Casero -->
-            <div class="item" data-id="39" data-nombre="Flan Casero" data-precio="7">
-                <div class="price-tag">7</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_flanCasero.jpg" alt="Flan Casero" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Flan tradicional con caramelo suave, textura delicada y sabor casero inigualable.</p>
-                    </div>
-                </div>
-                <h3>Flan Casero</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(39, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-39" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(39, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(39)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 9 - Cupcake de Chocolate -->
-            <div class="item" data-id="40" data-nombre="Cupcake de Chocolate" data-precio="6">
-                <div class="price-tag">6</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_cupcakesChocolate.jpg" alt="Cupcake de Chocolate" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Pequeño pastel de chocolate con cobertura de crema de cacao y chispas de colores.</p>
-                    </div>
-                </div>
-                <h3>Cupcake de Chocolate</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(40, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-40" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(40, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(40)">
-                    <i class="fas fa-cart-plus"></i> Agregar
-                </button>
-            </div>
-            
-            <!-- Producto 10 - Pastel de Zanahoria -->
-            <div class="item" data-id="41" data-nombre="Pastel de Zanahoria" data-precio="14">
-                <div class="price-tag">14</div>
-                <div class="image-container" style="position: relative; width: 100%; height: 180px; overflow: hidden;" 
-                     onmouseenter="this.querySelector('.image-overlay').style.opacity='1'" 
-                     onmouseleave="this.querySelector('.image-overlay').style.opacity='0'">
-                    <img src="/img/postre_zanahoria.jpg" alt="Pastel de Zanahoria" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div class="image-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); color: white; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px 12px 0 0; pointer-events: none;">
-                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: white;">Pastel suave y húmedo de zanahoria, nueces y especias, cubierto con frosting de queso crema.</p>
-                    </div>
-                </div>
-                <h3>Pastel de Zanahoria</h3>
-                
-                <div style="display: flex; justify-content: center; gap: 8px; margin: 15px;">
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(41, -1)">−</span>
-                    
-                    <input type="number" value="1" min="1" max="10" id="qty-41" readonly 
-                           style="width: 45px; height: 36px; border: 1px solid #999; border-radius: 4px; background: white; font-size: 1.1rem; font-weight: 700; color: #333; text-align: center; padding: 0; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; line-height: 1;">
-                    
-                    <span style="width: 36px; height: 36px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.4rem; font-weight: bold; color: #333; line-height: 1;" onclick="cambiarCantidad(41, 1)">+</span>
-                </div>
-                
-                <button class="btn-add-to-cart" onclick="agregarAlCarrito(41)">
+                <button class="btn-add-to-cart" th:onclick="'agregarAlCarrito(' + ${producto.id} + ')'">
                     <i class="fas fa-cart-plus"></i> Agregar
                 </button>
             </div>

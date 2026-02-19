@@ -1,6 +1,9 @@
 package com.masseria.controller;
 
+import com.masseria.service.ProductoService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -8,23 +11,38 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/menu")
 public class MenuController {
 
+    @Autowired
+    private ProductoService productoService;
+
     @GetMapping("/desayunos")
-    public String desayunos() {
-        return "menu/desayunos"; // Busca en templates/menu/desayunos.html
+    public String desayunos(Model model) {
+        model.addAttribute("productos", productoService.obtenerPorCategoria("Desayuno"));
+        model.addAttribute("titulo", "Desayunos");
+        model.addAttribute("activePage", "desayunos");
+        return "menu/desayunos";
     }
 
     @GetMapping("/bebidas-calientes")
-    public String bebidasCalientes() {
-        return "menu/bebidas-calientes"; // Busca en templates/menu/bebidas-calientes.html
+    public String bebidasCalientes(Model model) {
+        model.addAttribute("productos", productoService.obtenerPorCategoria("Bebida Caliente"));
+        model.addAttribute("titulo", "Bebidas Calientes");
+        model.addAttribute("activePage", "bebidas-calientes");
+        return "menu/bebidas-calientes";
     }
 
     @GetMapping("/bebidas-frias")
-    public String bebidasFrias() {
-        return "menu/bebidas-frias"; // Busca en templates/menu/bebidas-frias.html
+    public String bebidasFrias(Model model) {
+        model.addAttribute("productos", productoService.obtenerPorCategoria("Bebida Fría"));
+        model.addAttribute("titulo", "Bebidas Frías");
+        model.addAttribute("activePage", "bebidas-frias");
+        return "menu/bebidas-frias";
     }
 
     @GetMapping("/postres")
-    public String postres() {
-        return "menu/postres"; // Busca en templates/menu/postres.html
+    public String postres(Model model) {
+        model.addAttribute("productos", productoService.obtenerPorCategoria("Postre"));
+        model.addAttribute("titulo", "Postres");
+        model.addAttribute("activePage", "postres");
+        return "menu/postres";
     }
 }

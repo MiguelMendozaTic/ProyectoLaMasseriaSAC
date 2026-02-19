@@ -168,7 +168,7 @@
                     <button id="btn-confirmar" style="background: #28a745; color: white; border: none; border-radius: 30px; padding: 12px 30px; font-weight: 600; cursor: pointer; font-size: 1rem;">
                         <i class="fas fa-check mr-2"></i>Confirmar Pedido
                     </button>
-                    <a href="/" style="background: transparent; color: #c49b63; border: 2px solid #c49b63; border-radius: 30px; padding: 10px 30px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center;">
+                    <a href="/menu/desayunos" style="background: transparent; color: #c49b63; border: 2px solid #c49b63; border-radius: 30px; padding: 10px 30px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center;">
                         <i class="fas fa-plus mr-2"></i>Seguir comprando
                     </a>
                 </div>
@@ -214,10 +214,9 @@
                         <select style="width: 100%; border: 2px solid #e0d6cc; border-radius: 8px; padding: 10px 15px;" 
                                 id="metodo-pago" name="metodoPago" required>
                             <option value="">Selecciona un método</option>
-                            <option value="EFECTIVO">Efectivo</option>
                             <option value="YAPE">Yape</option>
-                            <option value="TARJETA">Tarjeta</option>
                             <option value="PLIN">Plin</option>
+                            <option value="TARJETA">Tarjeta</option>
                         </select>
                     </div>
                     
@@ -248,200 +247,299 @@
     <div th:replace="~{base :: scripts}"></div>
 
     <!-- Script para pedidos -->
-    <script>
-        // Función para actualizar contador (debe estar disponible globalmente)
-        window.actualizarContadorCarrito = function() {
-            const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-            const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-            const floatingCount = document.getElementById('floating-cart-count');
-            if (floatingCount) {
-                floatingCount.textContent = totalItems;
-            }
-        };
+   <script>
+    // Función para actualizar contador (debe estar disponible globalmente)
+    window.actualizarContadorCarrito = function() {
+        const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+        const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+        const floatingCount = document.getElementById('floating-cart-count');
+        if (floatingCount) {
+            floatingCount.textContent = totalItems;
+        }
+    };
 
-        $(document).ready(function() {
-            cargarCarrito();
-            
-            // Mostrar/ocultar campo de dirección
-            $('input[name="metodoEntrega"]').change(function() {
-                const metodo = $(this).val();
-                $('#metodoEntrega-hidden').val(metodo);
-                
-                if (metodo === 'DOMICILIO') {
-                    $('#campo-direccion').slideDown(300);
-                } else {
-                    $('#campo-direccion').slideUp(300);
-                }
+    // Función para mostrar mensajes flotantes
+    function mostrarMensaje(tipo, texto) {
+        const alerta = $(`
+            <div class="alert alert-${tipo} alert-custom alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                <i class="fa ${tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                <span>${texto}</span>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `);
+        
+        $('body').append(alerta);
+        
+        // Auto-cerrar después de 5 segundos
+        setTimeout(() => {
+            alerta.fadeOut(500, function() {
+                $(this).remove();
             });
+        }, 5000);
+    }
+
+    $(document).ready(function() {
+        cargarCarrito();
+        
+        // Verificar si hay parámetro de éxito en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('exito')) {
+            mostrarMensaje('success', '¡Pedido realizado con éxito! Te contactaremos pronto.');
+        }
+        if (urlParams.has('error')) {
+            mostrarMensaje('danger', 'Error al procesar el pedido. Por favor intenta nuevamente.');
+        }
+        
+        // Mostrar/ocultar campo de dirección
+        $('input[name="metodoEntrega"]').change(function() {
+            const metodo = $(this).val();
+            $('#metodoEntrega-hidden').val(metodo);
             
-            // Botón confirmar pedido
-            $('#btn-confirmar').click(function() {
-                const items = JSON.parse(localStorage.getItem('carrito')) || [];
-                if (items.length === 0) {
-                    alert('❌ Tu carrito está vacío');
-                    return;
-                }
-                
-                // Actualizar campos ocultos
-                const total = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-                $('#total-hidden').val(total.toFixed(2));
-                $('#detalles-hidden').val(JSON.stringify(items));
-                
-                // Actualizar método de entrega
-                const metodoEntrega = $('input[name="metodoEntrega"]:checked').val();
-                $('#metodoEntrega-hidden').val(metodoEntrega);
-                
-                // Actualizar dirección
-                if (metodoEntrega === 'DOMICILIO') {
-                    $('#direccion-hidden').val($('#direccion').val());
-                }
-                
-                $('#formulario-pago').slideDown(500);
-                $('html, body').animate({
-                    scrollTop: $('#formulario-pago').offset().top - 100
-                }, 500);
-            });
-            
-            // Método de pago cambia
-            $('#metodo-pago').change(function() {
-                const metodo = $(this).val();
-                let html = '';
-                
-                if (metodo === 'YAPE') {
-                    html = `
-                        <div style="background: #d1ecf1; border: 2px solid #bee5eb; border-radius: 8px; color: #0c5460; padding: 15px; margin-top: 15px;">
-                            <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">📱 Yape:</strong>
-                            <span style="font-size: 1.2rem; font-weight: bold;">912 594 051</span><br>
-                            <small style="opacity: 0.8;">Paga con Yape y te contactaremos para confirmar</small>
-                        </div>
-                    `;
-                } else if (metodo === 'PLIN') {
-                    html = `
-                        <div style="background: #d1ecf1; border: 2px solid #bee5eb; border-radius: 8px; color: #0c5460; padding: 15px; margin-top: 15px;">
-                            <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">💙 Plin:</strong>
-                            <span style="font-size: 1.2rem; font-weight: bold;">912 594 051</span><br>
-                            <small style="opacity: 0.8;">Paga con Plin y confirma tu pago</small>
-                        </div>
-                    `;
-                }
-                
-                $('#extra-pago').html(html);
-            });
-            
-            // Enviar formulario
-            $('#form-pedido').submit(function(e) {
-                const items = JSON.parse(localStorage.getItem('carrito')) || [];
-                const metodoEntrega = $('input[name="metodoEntrega"]:checked').val();
-                
-                if (metodoEntrega === 'DOMICILIO' && !$('#direccion').val()) {
-                    e.preventDefault();
-                    alert('❌ Por favor ingresa tu dirección para envío a domicilio');
-                    return;
-                }
-                
-                if (items.length === 0) {
-                    e.preventDefault();
-                    alert('❌ Tu carrito está vacío');
-                    return;
-                }
-                
-                // El formulario se envía normalmente al backend
-                console.log('✅ Enviando pedido al servidor...');
-            });
+            if (metodo === 'DOMICILIO') {
+                $('#campo-direccion').slideDown(300);
+            } else {
+                $('#campo-direccion').slideUp(300);
+            }
         });
         
-        function cargarCarrito() {
+        // Botón confirmar pedido
+        $('#btn-confirmar').click(function() {
             const items = JSON.parse(localStorage.getItem('carrito')) || [];
-            let html = '';
-            let total = 0;
-            
             if (items.length === 0) {
-                $('#carrito-container').hide();
-                $('#empty-cart').show();
+                mostrarMensaje('warning', '🛒 Tu carrito está vacío');
                 return;
             }
             
-            $('#carrito-container').show();
-            $('#empty-cart').hide();
-            
-            items.forEach((item, index) => {
-                const subtotal = item.precio * item.cantidad;
-                total += subtotal;
-                
-                html += `
-                    <tr>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">${item.nombre}</td>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
-                            <img src="${item.imagen}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #c49b63;" alt="${item.nombre}">
-                        </td>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">S/ ${item.precio.toFixed(2)}</td>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <span style="width: 30px; height: 30px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;" onclick="actualizarCantidad(${index}, -1)">−</span>
-                                <input type="number" style="width: 50px; height: 35px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: 600;" value="${item.cantidad}" min="1" max="10" id="cart-qty-${index}" readonly>
-                                <span style="width: 30px; height: 30px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;" onclick="actualizarCantidad(${index}, 1)">+</span>
-                            </div>
-                        </td>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">S/ ${subtotal.toFixed(2)}</td>
-                        <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
-                            <button style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;" onclick="eliminarItem(${index})">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            $('#items-carrito').html(html);
-            $('#total-carrito').html(`S/ ${total.toFixed(2)}`);
+            // Actualizar campos ocultos
+            const total = items.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
             $('#total-hidden').val(total.toFixed(2));
             
-            // Actualizar resumen
-            actualizarResumen(items, total);
-        }
-        
-        function actualizarResumen(items, total) {
-            let html = '<ul style="list-style: none; padding: 0;">';
-            items.forEach(item => {
-                html += `<li style="margin-bottom: 8px;">• ${item.cantidad}x ${item.nombre} - S/ ${(item.precio * item.cantidad).toFixed(2)}</li>`;
-            });
-            html += '</ul>';
-            $('#resumen-items').html(html);
-            $('#resumen-total').html(`S/ ${total.toFixed(2)}`);
-        }
-        
-        function actualizarCantidad(index, cambio) {
-            const items = JSON.parse(localStorage.getItem('carrito')) || [];
-            let nuevaCantidad = items[index].cantidad + cambio;
+            // Crear un resumen del pedido para enviar
+            const detalles = items.map(item => ({
+                id: item.id,
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                precio: item.precio,
+                subtotal: item.precio * item.cantidad
+            }));
             
-            if (nuevaCantidad < 1) nuevaCantidad = 1;
-            if (nuevaCantidad > 10) nuevaCantidad = 10;
+            $('#detalles-hidden').val(JSON.stringify(detalles));
             
-            items[index].cantidad = nuevaCantidad;
-            localStorage.setItem('carrito', JSON.stringify(items));
-            cargarCarrito();
+            // Actualizar método de entrega
+            const metodoEntrega = $('input[name="metodoEntrega"]:checked').val();
+            $('#metodoEntrega-hidden').val(metodoEntrega);
             
-            if (window.actualizarContadorCarrito) {
-                window.actualizarContadorCarrito();
+            // Actualizar dirección
+            if (metodoEntrega === 'DOMICILIO') {
+                $('#direccion-hidden').val($('#direccion').val());
             }
-        }
-        
-        function eliminarItem(index) {
-            const items = JSON.parse(localStorage.getItem('carrito')) || [];
-            items.splice(index, 1);
-            localStorage.setItem('carrito', JSON.stringify(items));
-            cargarCarrito();
             
-            if (window.actualizarContadorCarrito) {
-                window.actualizarContadorCarrito();
-            }
-        }
-        
-        // Inicializar contador
-        document.addEventListener('DOMContentLoaded', function() {
-            actualizarContadorCarrito();
+            $('#formulario-pago').slideDown(500);
+            $('html, body').animate({
+                scrollTop: $('#formulario-pago').offset().top - 100
+            }, 500);
         });
-    </script>
+        
+        // Método de pago cambia
+        $('#metodo-pago').change(function() {
+            const metodo = $(this).val();
+            let html = '';
+            
+            if (metodo === 'YAPE') {
+                html = `
+                    <div style="background: #d1ecf1; border: 2px solid #bee5eb; border-radius: 8px; color: #0c5460; padding: 15px; margin-top: 15px;">
+                        <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">📱 Yape:</strong>
+                        <span style="font-size: 1.2rem; font-weight: bold;">912 594 051</span><br>
+                        <small style="opacity: 0.8;">Paga con Yape y te contactaremos para confirmar</small>
+                    </div>
+                `;
+            } else if (metodo === 'PLIN') {
+                html = `
+                    <div style="background: #d1ecf1; border: 2px solid #bee5eb; border-radius: 8px; color: #0c5460; padding: 15px; margin-top: 15px;">
+                        <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">💙 Plin:</strong>
+                        <span style="font-size: 1.2rem; font-weight: bold;">912 594 051</span><br>
+                        <small style="opacity: 0.8;">Paga con Plin y confirma tu pago</small>
+                    </div>
+                `;
+            }
+            
+            $('#extra-pago').html(html);
+        });
+        
+        // ===== ENVÍO DEL FORMULARIO =====
+        $('#form-pedido').on('submit', function(e) {
+            e.preventDefault(); // Prevenir envío normal primero
+            
+            const items = JSON.parse(localStorage.getItem('carrito')) || [];
+            const metodoEntrega = $('input[name="metodoEntrega"]:checked').val();
+            
+            // Validaciones
+            if (items.length === 0) {
+                mostrarMensaje('warning', '🛒 Tu carrito está vacío');
+                return;
+            }
+            
+            if (metodoEntrega === 'DOMICILIO' && !$('#direccion').val()) {
+                mostrarMensaje('warning', '📍 Por favor ingresa tu dirección para envío a domicilio');
+                return;
+            }
+            
+            if (!$('#nombre').val() || !$('#telefono').val() || !$('#metodo-pago').val()) {
+                mostrarMensaje('warning', '📝 Por favor completa todos los campos obligatorios');
+                return;
+            }
+            
+            // Mostrar indicador de carga
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.text();
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...');
+            
+            // Preparar datos para enviar
+            const formData = {
+                cliente: $('#nombre').val(),
+                correo: $('#correo').val(),
+                telefono: $('#telefono').val(),
+                total: $('#total-hidden').val(),
+                metodoEntrega: $('#metodoEntrega-hidden').val(),
+                direccion: $('#direccion-hidden').val() || '',
+                metodoPago: $('#metodo-pago').val(),
+                detalles: $('#detalles-hidden').val()
+            };
+            
+            // Enviar mediante AJAX
+            $.ajax({
+                url: '/pedidos/guardar',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    // ===== LIMPIAR CARRITO =====
+                    localStorage.removeItem('carrito');
+                    
+                    // Actualizar contador flotante
+                    actualizarContadorCarrito();
+                    
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalText);
+                    
+                    // Mostrar mensaje de éxito
+                    mostrarMensaje('success', '✅ ¡Pedido realizado con éxito! Te contactaremos pronto.');
+                    
+                    // Redirigir después de 2 segundos para que vean el mensaje
+                    setTimeout(() => {
+                        window.location.href = '/pedidos?exito=true';
+                    }, 2000);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalText);
+                    
+                    // Mostrar mensaje de error
+                    let mensajeError = '❌ Error al procesar el pedido. Por favor intenta nuevamente.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        mensajeError = xhr.responseJSON.message;
+                    }
+                    mostrarMensaje('danger', mensajeError);
+                }
+            });
+        });
+    });
+    
+    function cargarCarrito() {
+        const items = JSON.parse(localStorage.getItem('carrito')) || [];
+        let html = '';
+        let total = 0;
+        
+        if (items.length === 0) {
+            $('#carrito-container').hide();
+            $('#empty-cart').show();
+            return;
+        }
+        
+        $('#carrito-container').show();
+        $('#empty-cart').hide();
+        
+        items.forEach((item, index) => {
+            const subtotal = item.precio * item.cantidad;
+            total += subtotal;
+            
+            html += `
+                <tr>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">${item.nombre}</td>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
+                        <img src="${item.imagen}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #c49b63;" alt="${item.nombre}">
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">S/ ${item.precio.toFixed(2)}</td>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 30px; height: 30px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;" onclick="actualizarCantidad(${index}, -1)">−</span>
+                            <input type="number" style="width: 50px; height: 35px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: 600;" value="${item.cantidad}" min="1" max="10" id="cart-qty-${index}" readonly>
+                            <span style="width: 30px; height: 30px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;" onclick="actualizarCantidad(${index}, 1)">+</span>
+                        </div>
+                    </td>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">S/ ${subtotal.toFixed(2)}</td>
+                    <td style="padding: 15px; border-bottom: 1px solid #f0f0f0; vertical-align: middle;">
+                        <button style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer;" onclick="eliminarItem(${index})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        $('#items-carrito').html(html);
+        $('#total-carrito').html(`S/ ${total.toFixed(2)}`);
+        $('#total-hidden').val(total.toFixed(2));
+        
+        // Actualizar resumen
+        actualizarResumen(items, total);
+    }
+    
+    function actualizarResumen(items, total) {
+        let html = '<ul style="list-style: none; padding: 0;">';
+        items.forEach(item => {
+            html += `<li style="margin-bottom: 8px;">• ${item.cantidad}x ${item.nombre} - S/ ${(item.precio * item.cantidad).toFixed(2)}</li>`;
+        });
+        html += '</ul>';
+        $('#resumen-items').html(html);
+        $('#resumen-total').html(`S/ ${total.toFixed(2)}`);
+    }
+    
+    function actualizarCantidad(index, cambio) {
+        const items = JSON.parse(localStorage.getItem('carrito')) || [];
+        let nuevaCantidad = items[index].cantidad + cambio;
+        
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+        
+        items[index].cantidad = nuevaCantidad;
+        localStorage.setItem('carrito', JSON.stringify(items));
+        cargarCarrito();
+        
+        if (window.actualizarContadorCarrito) {
+            window.actualizarContadorCarrito();
+        }
+    }
+    
+    function eliminarItem(index) {
+        const items = JSON.parse(localStorage.getItem('carrito')) || [];
+        items.splice(index, 1);
+        localStorage.setItem('carrito', JSON.stringify(items));
+        cargarCarrito();
+        
+        if (window.actualizarContadorCarrito) {
+            window.actualizarContadorCarrito();
+        }
+    }
+    
+    // Inicializar contador
+    document.addEventListener('DOMContentLoaded', function() {
+        actualizarContadorCarrito();
+    });
+</script>
     
     <!-- Botones flotantes -->
     <div th:replace="~{base :: floating-buttons}"></div>
