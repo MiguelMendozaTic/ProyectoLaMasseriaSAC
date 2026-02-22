@@ -20,32 +20,24 @@ pipeline {
                     echo '🔨 INICIANDO COMPILACIÓN AUTOMÁTICA'
                     echo '========================================'
                     
-                    // Mostrar información del entorno
                     sh 'java -version'
                     sh 'mvn -version'
                     
-                    echo 'Limpiando compilaciones anteriores...'
-                    sh 'mvn clean -B -ntp'
-                    
-                    echo 'Compilando código fuente...'
-                    sh 'mvn compile -B -ntp'
+                    sh 'mvn clean compile -B -ntp'
                 }
             }
             post {
                 success {
-                    echo 'COMPILACIÓN EXITOSA'
-                    echo 'El código se compiló correctamente'
+                    echo '✅ COMPILACIÓN EXITOSA'
                 }
                 failure {
-                    echo 'ERROR DE COMPILACIÓN'
-                    echo 'Revisa los logs para más detalles'
+                    echo '❌ ERROR DE COMPILACIÓN'
                 }
             }
         }
         
         stage('Test') {
             steps {
-                echo 'Ejecutando pruebas...'
                 sh 'mvn test -B -ntp'
             }
             post {
@@ -57,7 +49,6 @@ pipeline {
         
         stage('Package') {
             steps {
-                echo 'Empaquetando aplicación...'
                 sh 'mvn package -DskipTests -B -ntp'
             }
         }
@@ -65,7 +56,6 @@ pipeline {
     
     post {
         always {
-            echo 'Pipeline finalizado'
             cleanWs()
         }
         success {
