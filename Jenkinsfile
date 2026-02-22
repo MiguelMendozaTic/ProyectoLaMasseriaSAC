@@ -15,8 +15,31 @@ pipeline {
         
         stage('Compile') {
             steps {
-                echo 'Compilando el proyecto...'
-                sh 'mvn clean compile -B -ntp'
+                script {
+                    echo '========================================'
+                    echo '🔨 INICIANDO COMPILACIÓN AUTOMÁTICA'
+                    echo '========================================'
+                    
+                    // Mostrar información del entorno
+                    sh 'java -version'
+                    sh 'mvn -version'
+                    
+                    echo 'Limpiando compilaciones anteriores...'
+                    sh 'mvn clean -B -ntp'
+                    
+                    echo 'Compilando código fuente...'
+                    sh 'mvn compile -B -ntp'
+                }
+            }
+            post {
+                success {
+                    echo 'COMPILACIÓN EXITOSA'
+                    echo 'El código se compiló correctamente'
+                }
+                failure {
+                    echo 'ERROR DE COMPILACIÓN'
+                    echo 'Revisa los logs para más detalles'
+                }
             }
         }
         
@@ -46,10 +69,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '🎉 Pipeline completado con éxito'
+            echo 'Pipeline completado con éxito'
         }
         failure {
-            echo '❌ Pipeline falló'
+            echo 'Pipeline falló'
         }
     }
 }
