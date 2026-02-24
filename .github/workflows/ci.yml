@@ -1,0 +1,25 @@
+name: CI Pipeline - Punto 1
+
+# Configuración del trigger: cuándo se ejecutará
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Paso 1: Obtener el código
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+      
+      # Paso 2: Solo para verificar que funciona
+      - name: Verificar configuración
+        run: |
+          echo "Pipeline configurado correctamente!"
+          echo "Directorio actual: $(pwd)"
+          echo "Archivos en el repositorio:"
+          ls -la
