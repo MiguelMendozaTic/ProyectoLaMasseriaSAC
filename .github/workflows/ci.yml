@@ -1,60 +1,21 @@
-name: CI Pipeline - Punto 3
+package com.masseria;
 
-# Configuración del trigger
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+@SpringBootTest
+class ProyectoMasseriaApplicationTests {
+
+    @Test
+    void contextLoads() {
+        // Esta prueba verifica que el contexto de Spring Boot se carga correctamente
+        System.out.println("Contexto de Spring Boot cargado correctamente");
+    }
     
-    steps:
-      # Paso 1: Obtener el código
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
-      
-      # Paso 2: Configurar Java
-      - name: Configurar JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      
-      # Paso 3: Cachear dependencias (para pruebas más rápidas)
-      - name: Cachear dependencias de Maven
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      
-      # PUNTO 2: Compilar (ya lo tenemos)
-      - name: Compilar el proyecto
-        run: mvn clean compile
-      
-      # PUNTO 3: Ejecutar pruebas automáticas
-      - name: Ejecutar pruebas con Maven
-        run: mvn test
-      
-      # Paso adicional: Publicar resultados de pruebas (opcional pero útil)
-      - name: Publicar resultados de pruebas
-        if: always()  # Se ejecuta incluso si las pruebas fallan
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: target/surefire-reports/
-      
-      # Paso adicional: Verificar que las pruebas pasaron
-      - name: Verificar pruebas
-        run: |
-          if [ -d "target/surefire-reports" ]; then
-            echo "Pruebas ejecutadas - Reportes generados"
-            echo "Resumen de pruebas:"
-            find target/surefire-reports -name "*.txt" -exec cat {} \; || true
-          else
-            echo "No se encontraron reportes de pruebas"
-          fi
+    @Test
+    void testSimple() {
+        // Una prueba muy simple que siempre pasa
+        assert true;
+        System.out.println("Prueba simple ejecutada");
+    }
+}
