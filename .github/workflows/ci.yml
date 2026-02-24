@@ -1,6 +1,6 @@
-name: CI Pipeline - Punto 1
+name: CI Pipeline - Punto 2
 
-# Configuración del trigger: cuándo se ejecutará
+# Configuración del trigger
 on:
   push:
     branches: [ main, master ]
@@ -16,10 +16,30 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
       
-      # Paso 2: Solo para verificar que funciona
-      - name: Verificar configuración
+      # Paso 2: Configurar Java (versión común, ajusta según tu proyecto)
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      # Paso 3: Verificar versión de Java y Maven
+      - name: Verificar versiones
         run: |
-          echo "Pipeline configurado correctamente!"
-          echo "Directorio actual: $(pwd)"
-          echo "Archivos en el repositorio:"
-          ls -la
+          java -version
+          mvn --version
+      
+      # PUNTO 2: Automatizar compilación
+      - name: Compilar el proyecto
+        run: mvn clean compile
+      
+      # Paso adicional: Verificar que la compilación fue exitosa
+      - name: Verificar compilación
+        run: |
+          if [ -d "target" ]; then
+            echo "Compilación exitosa - Directorio target creado"
+            ls -la target/
+          else
+            echo "Error: No se creó el directorio target"
+            exit 1
+          fi
